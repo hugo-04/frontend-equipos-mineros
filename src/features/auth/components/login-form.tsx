@@ -8,6 +8,7 @@ import { Input } from "@/shared/components/ui/input";
 import { useLogin } from "../hooks/use-auth";
 import { loginSchema, type LoginValues } from "../schemas/login.schema";
 
+/** Formulario de login. Valida con Zod antes de enviar y deja los errores del backend junto a cada campo. */
 export function LoginForm({ destino }: { destino: string }) {
   const {
     register,
@@ -51,7 +52,7 @@ export function LoginForm({ destino }: { destino: string }) {
       </CampoFormulario>
       {login.isError && login.error instanceof Error && login.error.name === "ApiError" && (
         <p role="alert" className="text-destructive text-sm">
-          {/* Mensaje genérico del backend: no revela si el usuario existe */}
+          {/* El mensaje del backend es genérico a propósito: no dice si el usuario existe */}
           {(login.error as Error).message || "No se pudo iniciar sesión"}
         </p>
       )}

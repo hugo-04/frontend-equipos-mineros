@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** Mismos límites que el contrato del backend (LoginRequest). */
+/** Los mismos límites que tiene el LoginRequest del contrato del backend. */
 export const loginSchema = z.object({
   username: z
     .string({ error: "El usuario es obligatorio" })
@@ -15,7 +15,7 @@ export const loginSchema = z.object({
 
 export type LoginValues = z.infer<typeof loginSchema>;
 
-/** Lo que el servidor de Next devuelve al navegador: nunca el token. */
+/** Lo que el servidor de Next le devuelve al navegador al iniciar sesión. Nunca incluye el token. */
 export const sesionRespuestaSchema = z.object({
   ok: z.literal(true),
   usuario: z.object({ username: z.string(), rol: z.string().optional() }),

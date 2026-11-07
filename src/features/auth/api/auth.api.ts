@@ -6,7 +6,7 @@ import {
   type SesionRespuesta,
 } from "../schemas/login.schema";
 
-/** Llama a la ruta propia /api/auth/login; el token queda en una cookie httpOnly y nunca llega al JavaScript. */
+/** Inicia sesión por la ruta propia /api/auth/login. El token queda en una cookie httpOnly y el JavaScript nunca lo ve. */
 export function iniciarSesion(credenciales: LoginValues): Promise<SesionRespuesta> {
   return peticion("/api/auth/login", {
     metodo: "POST",
@@ -16,6 +16,7 @@ export function iniciarSesion(credenciales: LoginValues): Promise<SesionRespuest
   });
 }
 
+/** Cierra la sesión: el servidor borra la cookie. */
 export function cerrarSesion(): Promise<void> {
   return peticion("/api/auth/logout", { metodo: "POST", rutaPropia: true });
 }
