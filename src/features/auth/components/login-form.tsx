@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { CampoFormulario, propsAccesibles } from "@/shared/components/campo-formulario";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
+import { PasswordInput } from "@/shared/components/ui/password-input";
 import { useLogin } from "../hooks/use-auth";
 import { loginSchema, type LoginValues } from "../schemas/login.schema";
 
@@ -28,7 +29,11 @@ export function LoginForm({ destino }: { destino: string }) {
 
   return (
     <form
-      onSubmit={handleSubmit((valores) => login.mutate(valores))}
+      onSubmit={(evento) => {
+        // El error del intento anterior se quita al volver a enviar, así no queda junto a los errores nuevos
+        login.reset();
+        return handleSubmit((valores) => login.mutate(valores))(evento);
+      }}
       noValidate
       className="space-y-4"
     >
@@ -42,9 +47,8 @@ export function LoginForm({ destino }: { destino: string }) {
         />
       </CampoFormulario>
       <CampoFormulario id="password" etiqueta="Contraseña" error={errors.password?.message}>
-        <Input
+        <PasswordInput
           {...propsAccesibles("password", errors.password?.message)}
-          type="password"
           autoComplete="current-password"
           disabled={login.isPending}
           {...register("password")}
