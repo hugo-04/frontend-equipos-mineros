@@ -1,0 +1,89 @@
+"use client";
+
+import { AnimatePresence, motion } from "motion/react";
+import { History } from "lucide-react";
+import { useState } from "react";
+import { EmptyState } from "@/shared/components/empty-state";
+import { ErrorPanel } from "@/shared/components/error-panel";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
+import { formatearFecha, formatearHorometro } from "@/shared/lib/formatters";
+import { useMantenimientos } from "../hooks/use-mantenimientos";
+
+export function HistorialMantenimientos({ equipoId }: { equipoId: number }) {
+  const [pagina, setPagina] = useState(1);
+  const historial = useMantenimientos(equipoId, pagina);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Historial de mantenimientos</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {historial.isPending ? (
+          <div className="space-y-2" role="status" aria-label="Cargando historial">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        ) : historial.isError ? (
+          <ErrorPanel error={historial.error} alReintentar={() => void historial.refetch()} />
+        ) : historial.data.content.length === 0 ? (
+          <EmptyState
+            icono={<History className="size-8" aria-hidden="true" />}
+            titulo="Sin mantenimientos"
+            descripcion="Cuando registres uno aparecerá aquí."
+          />
+        ) : (
+          <div className="space-y-4">
+            <Table>
+              <caption className="sr-only">Historial de mantenimientos del equipo</caption>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Fecha</TableHead>
+                  <TableHead className="text-right">Horómetro</TableHead>
+                  <TableHead>Notas</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <AnimatePresence initial={false}>
+                  {historial.data.content.map((m, i) => (
+                    <motion.tr
+                      key={m.id}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0, transition: { duration: 0.2, delay: Math.min(i * 0.03, 0.25) } }}
+                      exit={{ opacity: 0 }}
+                      className="border-b"
+                    >
+                      <TableCell className="whitespace-nowrap">{formatearFecha(m.fecha)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{formatearHorometro(m.horometroAlRegistrar)}</TableCell>
+                      {/* Las notas vienen del usuario: se muestran siempre como texto */}
+                      <TableCell className="max-w-xs break-words text-muted-foreground">{m.notas ?? "—"}</TableCell>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </TableBody>
+            </Table>
+            {historial.data.totalPages > 1 && (
+              <nav aria-label="Paginación del historial" className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Página {historial.data.page} de {historial.data.totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={historial.data.first} onClick={() => setPagina((p) => p - 1)}>
+                    Anterior
+                  </Button>
+                  <Button variant="outline" size="sm" disabled={historial.data.last} onClick={() => setPagina((p) => p + 1)}>
+                    Siguiente
+                  </Button>
+                </div>
+              </nav>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
