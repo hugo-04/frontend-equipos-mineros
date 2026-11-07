@@ -1,7 +1,7 @@
 name: CI
 
-# Se ejecuta en cada push y en cada pull request.
-# Las acciones están fijadas por SHA de commit (el comentario dice la versión); Dependabot las mantiene al día.
+# Corre en cada push y en cada pull request.
+# Las acciones están fijadas por el SHA del commit (el comentario de al lado dice la versión) y Dependabot las mantiene al día.
 on:
   push:
   pull_request:
@@ -10,7 +10,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Permisos mínimos por defecto; los jobs que necesitan más lo piden explícitamente
+# Permisos mínimos para todo; el job que necesite más lo pide por su cuenta
 permissions:
   contents: read
 
@@ -21,13 +21,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # La versión de Node sale de .nvmrc (la misma que usa el desarrollo y el proyecto de Vercel)
+      # La versión de Node sale de .nvmrc, la misma que se usa en desarrollo y en Vercel
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
 
-      # Instalación reproducible a partir del lockfile
+      # npm ci instala exactamente lo que dice el lockfile
       - run: npm ci
 
       - run: npm run lint
@@ -39,7 +39,7 @@ jobs:
         env:
           BACKEND_URL: http://localhost:8080
 
-      # A03: falla si hay vulnerabilidades altas o críticas en las dependencias
+      # A03: el job falla si alguna dependencia tiene una vulnerabilidad alta o crítica
       - name: npm audit
         run: npm audit --audit-level=high
 
@@ -51,14 +51,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Para repositorios de una organización gitleaks pide la licencia en el secret GITLEAKS_LICENSE
+      # Si el repositorio es de una organización, gitleaks pide su licencia en el secret GITLEAKS_LICENSE
       - name: gitleaks
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
-  # En repositorios privados requiere GitHub Advanced Security; si no lo tienes, desactívalo creando la
+  # En repositorios privados necesita GitHub Advanced Security; si no lo tienes, apágalo creando la
   # variable del repositorio CODEQL_HABILITADO=false.
   codeql:
     name: CodeQL
@@ -79,8 +79,8 @@ jobs:
       - name: Analizar
         uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
 
-  # A03/A05: escaneo dinámico (OWASP ZAP baseline) contra la app levantada con un backend simulado de pruebas.
-  # Los hallazgos de nivel alto hacen fallar el job; los avisos aceptados (con motivo) están en .zap/rules.tsv.
+  # A03/A05: escaneo dinámico (OWASP ZAP baseline) contra la app levantada con un backend simulado.
+  # Un hallazgo de nivel alto hace fallar el job; los avisos que se aceptaron, con su motivo, están en .zap/rules.tsv.
   zap:
     name: OWASP ZAP baseline
     runs-on: ubuntu-latest

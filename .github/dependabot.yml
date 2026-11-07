@@ -1,5 +1,5 @@
-# Dependabot: avisa (y abre PR) cuando una dependencia o una acción de GitHub tiene versión nueva
-# o una vulnerabilidad corregida. Las acciones están fijadas por SHA, así que Dependabot las mantiene al día.
+# Dependabot abre un PR cuando una dependencia o una acción de GitHub tiene versión nueva o una
+# vulnerabilidad corregida. Como las acciones están fijadas por SHA, es él quien las mantiene al día.
 version: 2
 updates:
   - package-ecosystem: npm
