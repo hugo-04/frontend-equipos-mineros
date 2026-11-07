@@ -16,8 +16,8 @@ function borrarCookie(respuesta: NextResponse): NextResponse {
 }
 
 /**
- * Reenvía al backend adjuntando el token de la cookie httpOnly. Nunca reenvía las cookies del navegador,
- * solo habla con BACKEND_URL, solo con rutas de la lista blanca, con timeout y límite de cuerpo.
+ * Reenvía al backend con el token que viene en la cookie httpOnly. Nunca le pasa al backend las cookies del
+ * navegador, solo habla con BACKEND_URL y solo con rutas de la lista blanca, con timeout y límite de cuerpo.
  */
 async function manejar(request: NextRequest, contexto: Contexto): Promise<NextResponse> {
   const { path } = await contexto.params;

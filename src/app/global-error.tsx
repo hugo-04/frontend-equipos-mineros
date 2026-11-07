@@ -1,6 +1,6 @@
 "use client";
 
-/** Último recurso: falla el propio layout raíz. Sin dependencias de estilos ni de proveedores. */
+/** Último recurso, para cuando falla el propio layout raíz. Por eso no usa los estilos ni los proveedores de la app. */
 export default function GlobalError({
   reset,
 }: {

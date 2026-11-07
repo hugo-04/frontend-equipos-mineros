@@ -5,9 +5,9 @@ import { COOKIE_SESION } from "@/shared/lib/sesion-cookie";
 import { construirCsp } from "@/shared/server/security-headers";
 
 /**
- * Convención de Next.js 16: `proxy.ts` reemplaza a `middleware.ts`.
- * Primera defensa de las rutas protegidas (la segunda es la validación en el layout (protected)) y
- * generador de la CSP con nonce por petición.
+ * En Next.js 16 `proxy.ts` reemplaza a `middleware.ts`. En cada petición hace dos cosas: es la primera defensa de
+ * las rutas protegidas (la segunda es la validación de sesión en el layout (protected)) y genera la CSP con un
+ * nonce nuevo.
  */
 const RUTAS_PUBLICAS = new Set([
   "/login",

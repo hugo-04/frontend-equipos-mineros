@@ -3,7 +3,7 @@
 import { EquipoDetalle, useEquipo } from "@/features/equipos";
 import { HistorialMantenimientos, RegistrarMantenimientoDialog } from "@/features/mantenimientos";
 
-/** Compone equipos + mantenimientos (las features no se importan entre sí; las une la ruta). */
+/** Junta equipos y mantenimientos. Las features no se importan entre sí, así que las une esta ruta. */
 export function DetalleEquipo({ id }: { id: number }) {
   const equipo = useEquipo(id);
   const codigo = equipo.data?.codigo ?? "";

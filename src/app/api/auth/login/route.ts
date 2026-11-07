@@ -16,6 +16,7 @@ const respuestaBackendSchema = z.object({
   expiresIn: z.number().positive(),
 });
 
+/** Inicia sesión: valida los datos, llama al backend y guarda el token en una cookie httpOnly. Al navegador solo le devuelve el usuario y su rol. */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!origenPermitido(request.headers, request.url)) {
     registrar("warn", "login: origen no permitido");
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
     limitadorLogin.reiniciar(ip);
     const claims = leerClaims(sesion.data.accessToken);
-    // La cookie nunca dura más que el token
+    // La cookie nunca dura más que el token: se toma el menor entre expiresIn y el exp del JWT
     const segundosPorExp = claims?.exp
       ? Math.floor(claims.exp - Date.now() / 1000)
       : sesion.data.expiresIn;
@@ -92,12 +93,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { ok: true, usuario: { username: claims?.sub ?? validado.data.username, rol: claims?.rol } },
       { headers: CABECERAS_NO_STORE },
     );
-    // El token solo viaja en esta cookie httpOnly; el cuerpo que ve el navegador no lo incluye
+    // El token solo viaja en esta cookie httpOnly; el cuerpo que recibe el navegador no lo trae
     salida.cookies.set(COOKIE_SESION, sesion.data.accessToken, opcionesCookie(maxAge));
     return salida;
   }
 
-  // Cualquier respuesta que no sea 200 cuenta como fallo; el mensaje del backend ya es genérico
+  // Solo el 401 cuenta como intento fallido; el mensaje del backend ya es genérico, así que se pasa tal cual
   if (respuesta.status === 401) {
     limitadorLogin.registrarFallo(ip);
     registrar("warn", "login: credenciales rechazadas", {

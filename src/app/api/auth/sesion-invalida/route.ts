@@ -4,9 +4,9 @@ import { CABECERAS_NO_STORE } from "@/shared/server/respuestas";
 import { COOKIE_SESION, opcionesCookie } from "@/shared/server/session";
 
 /**
- * Falla cerrado: cuando el layout no puede validar la sesión (vencida o backend caído) redirige aquí.
- * Borra la cookie y manda al login; así nunca hay un bucle /login -> /equipos -> /login.
- * Solo borra una cookie: no hace nada que un atacante pueda aprovechar con un GET.
+ * Falla cerrado: cuando el layout no puede validar la sesión (vencida o backend caído) redirige acá. Borra la
+ * cookie y manda al login, así nunca se arma un bucle /login -> /equipos -> /login. Un GET que solo borra una
+ * cookie no le sirve de nada a un atacante.
  */
 export function GET(request: NextRequest): NextResponse {
   const from = rutaInternaSegura(request.nextUrl.searchParams.get("from"));

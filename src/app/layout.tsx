@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // El nonce de la CSP lo genera src/proxy.ts; se usa para el script inline del tema
+  // El nonce de la CSP lo genera src/proxy.ts; acá se usa para el script en línea del tema
   const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="es" suppressHydrationWarning>

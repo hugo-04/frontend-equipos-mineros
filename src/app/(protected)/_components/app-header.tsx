@@ -9,10 +9,11 @@ import { Button } from "@/shared/components/ui/button";
 
 const sinSuscripcion = () => () => {};
 
+/** Encabezado de las rutas protegidas: enlace al inicio, cambio de tema y cerrar sesión. */
 export function AppHeader() {
   const logout = useLogout();
   const { resolvedTheme, setTheme } = useTheme();
-  // Evita el desajuste de hidratación: el tema real solo se conoce en el cliente
+  // El tema real solo se conoce en el cliente; esto evita que servidor y cliente pinten distinto al hidratar
   const montado = useSyncExternalStore(
     sinSuscripcion,
     () => true,

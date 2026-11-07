@@ -3,7 +3,7 @@
 import { MENSAJE_SISTEMA } from "@/shared/api/error-handler";
 import { Button } from "@/shared/components/ui/button";
 
-/** Fallo inesperado de una ruta: nunca se muestra el error crudo ni la traza (A10). */
+/** Falla inesperada de una ruta. Nunca se muestra el error crudo ni la traza. */
 export default function Error({
   reset,
 }: {

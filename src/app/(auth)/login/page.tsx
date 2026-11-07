@@ -12,13 +12,14 @@ import { rutaInternaSegura } from "@/shared/lib/ruta-segura";
 
 export const metadata: Metadata = { title: "Iniciar sesión" };
 
+/** La pantalla de login. Si llegaron por una sesión vencida, lo avisa. */
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string; expirada?: string }>;
 }) {
   const { from, expirada } = await searchParams;
-  // A01: solo rutas internas; cualquier otra cosa vuelve a /equipos
+  // Solo se acepta una ruta interna; si el from trae cualquier otra cosa, se va a /equipos
   const destino = rutaInternaSegura(from);
 
   return (
