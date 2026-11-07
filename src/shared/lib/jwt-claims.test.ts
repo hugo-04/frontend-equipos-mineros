@@ -7,6 +7,7 @@ function jwt(payload: object): string {
   return `${b64({ alg: "HS256" })}.${b64(payload)}.firma`;
 }
 
+// Solo se lee el payload, sin verificar la firma: sirve para el vencimiento y para mostrar usuario y rol
 describe("leerClaims", () => {
   it("lee sub, rol y exp", () => {
     expect(leerClaims(jwt({ sub: "admin", rol: "ADMIN", exp: 123 }))).toEqual({
@@ -32,6 +33,7 @@ describe("leerClaims", () => {
   });
 });
 
+// Un token vencido, ilegible o sin exp se trata como si no hubiera sesión
 describe("tokenVigente", () => {
   const ahora = 1_700_000_000_000;
 

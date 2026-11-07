@@ -16,6 +16,7 @@ vi.mock("sonner", () => ({
 const error = (status: number, extra: Partial<ConstructorParameters<typeof ApiError>[0]> = {}) =>
   new ApiError({ status, code: "X", message: "mensaje del backend", ...extra });
 
+// Cada estado HTTP cae en la categoría que decide qué se le muestra al usuario
 describe("classifyError", () => {
   it.each([
     [400, "validation"],
@@ -40,6 +41,7 @@ describe("classifyError", () => {
   });
 });
 
+// Se lee el ErrorResponse del backend y se tolera que falten los campos opcionales
 describe("apiErrorDesdeRespuesta", () => {
   it("lee el ErrorResponse del backend con details[].reason y traceId", () => {
     const e = apiErrorDesdeRespuesta(400, {
@@ -86,6 +88,7 @@ describe("apiErrorDesdeRespuesta", () => {
   });
 });
 
+// Los errores con campo van junto al campo; los demás, al toast
 describe("mapearDetalles", () => {
   it("separa lo que tiene campo en el formulario de lo que no", () => {
     const e = error(400, {
@@ -101,6 +104,7 @@ describe("mapearDetalles", () => {
   });
 });
 
+// Un solo lugar decide qué aviso ve el usuario según el tipo de error
 describe("handleMutationError", () => {
   it("validación: marca los campos y avisa con un toast de advertencia", () => {
     const ponerError = vi.fn();

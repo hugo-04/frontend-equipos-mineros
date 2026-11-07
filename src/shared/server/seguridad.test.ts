@@ -7,6 +7,7 @@ import { CABECERAS_ESTATICAS, construirCsp } from "./security-headers";
 
 const vacio = new URLSearchParams();
 
+// El proxy solo reenvía rutas conocidas y rechaza cualquier intento de salirse de ellas
 describe("lista blanca del proxy (A01: SSRF y path traversal)", () => {
   it.each([
     ["GET", ["tipos"]],
@@ -65,6 +66,7 @@ describe("lista blanca del proxy (A01: SSRF y path traversal)", () => {
   });
 });
 
+// Una escritura solo vale si viene de este mismo sitio
 describe("verificación de Origin (A07: CSRF)", () => {
   const url = "https://app.example.com/api/proxy/equipos";
   const con = (h: Record<string, string>) => new Headers(h);
@@ -103,6 +105,7 @@ describe("verificación de Origin (A07: CSRF)", () => {
   });
 });
 
+// Tras demasiados fallos desde una IP se bloquea, y se libera pasado el tiempo
 describe("límite de intentos de login (A06)", () => {
   it("bloquea tras el máximo y se libera al pasar la ventana", () => {
     const l = new LimitadorLogin(3, 1000);
@@ -133,6 +136,7 @@ describe("límite de intentos de login (A06)", () => {
   });
 });
 
+// La CSP y las demás cabeceras de seguridad
 describe("cabeceras de seguridad (A02)", () => {
   it("la CSP de producción no permite scripts inline ni eval", () => {
     const csp = construirCsp("abc123", true);

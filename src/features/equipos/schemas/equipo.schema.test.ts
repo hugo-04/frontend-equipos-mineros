@@ -12,6 +12,7 @@ function mensajes(entrada: unknown, esquema = equipoFormSchema): Record<string, 
   return salida;
 }
 
+// Las reglas del formulario de equipo, las mismas del contrato del backend
 describe("equipoFormSchema", () => {
   it("acepta un equipo válido y convierte tipoId y horómetro a número", () => {
     const r = equipoFormSchema.parse(valido);
@@ -67,6 +68,7 @@ describe("equipoFormSchema", () => {
   });
 });
 
+// Al editar, el horómetro no puede bajar del valor actual
 describe("crearEquipoFormSchema con horómetro mínimo (edición)", () => {
   const esquema = crearEquipoFormSchema({ horometroMinimo: 100 });
 
@@ -82,6 +84,7 @@ describe("crearEquipoFormSchema con horómetro mínimo (edición)", () => {
   });
 });
 
+// Lo que llega del API se valida antes de usarse
 describe("equipoSchema (respuesta del API)", () => {
   const respuesta = {
     id: 1,

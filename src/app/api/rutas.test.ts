@@ -2,6 +2,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// El backend se simula: en estas pruebas no se llama a nada real
 const llamarBackend = vi.fn();
 vi.mock("@/shared/server/backend", () => ({
   llamarBackend: (...args: unknown[]) => llamarBackend(...args),
@@ -71,6 +72,7 @@ beforeEach(() => {
   limitadorLogin.reiniciar("1.1.1.1");
 });
 
+// Lo más importante del login: el token se queda en la cookie httpOnly y nunca llega al navegador en el cuerpo
 describe("POST /api/auth/login", () => {
   it("guarda el token en una cookie httpOnly y NUNCA lo devuelve al navegador", async () => {
     llamarBackend.mockResolvedValue(
@@ -233,6 +235,7 @@ describe("POST /api/auth/login", () => {
   });
 });
 
+// Cerrar sesión borra la cookie, y una sesión que no se puede validar se borra y manda al login sin bucles
 describe("POST /api/auth/logout y sesión inválida", () => {
   it("logout borra la cookie", async () => {
     const r = await logout(
@@ -261,6 +264,7 @@ describe("POST /api/auth/logout y sesión inválida", () => {
   });
 });
 
+// El proxy reenvía solo lo permitido, con el token del servidor, y falla cerrado si algo no cuadra
 describe("/api/proxy/[...path]", () => {
   const conSesion = `sesion=${TOKEN}`;
 
@@ -390,6 +394,7 @@ describe("/api/proxy/[...path]", () => {
   });
 });
 
+// El proxy.ts de Next: quién entra a qué ruta y que la CSP lleve un nonce distinto en cada petición
 describe("proxy.ts (rutas protegidas y CSP)", () => {
   const req = (ruta: string, cookie?: string) =>
     new NextRequest(`${HOST}${ruta}`, { headers: cookie ? { cookie } : {} });

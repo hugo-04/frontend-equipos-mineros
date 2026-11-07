@@ -26,7 +26,7 @@ import { toast } from "sonner";
 import { EquipoFormDialog } from "./equipo-form-dialog";
 import { EstadoBadge } from "./estado-badge";
 
-// Radix usa APIs que jsdom no trae
+// Radix usa cosas del navegador que jsdom no trae; acá se les pone un reemplazo vacío
 beforeEach(() => {
   crearEquipo.mockReset();
   vi.mocked(toast.warning).mockClear();
@@ -47,6 +47,7 @@ function conCliente(ui: React.ReactElement) {
   return render(<QueryClientProvider client={cliente}>{ui}</QueryClientProvider>);
 }
 
+// El estado tiene que entenderse sin depender del color: siempre hay texto
 describe("EstadoBadge", () => {
   it("muestra 'Requiere mantenimiento' con texto (no solo color)", () => {
     render(<EstadoBadge requiereMantenimiento />);
@@ -60,6 +61,7 @@ describe("EstadoBadge", () => {
   });
 });
 
+// La confirmación nombra lo que se va a eliminar y no deja enviar dos veces
 describe("ConfirmDialog", () => {
   it("nombra lo que se elimina y confirma o cancela", async () => {
     const alConfirmar = vi.fn();
@@ -100,6 +102,7 @@ describe("ConfirmDialog", () => {
   });
 });
 
+// El formulario valida antes de llamar al API y muestra los errores del backend donde corresponde
 describe("EquipoFormDialog", () => {
   it("valida antes de enviar: campos vacíos muestran errores accesibles y no llaman al API", async () => {
     conCliente(<EquipoFormDialog abierto alCambiar={vi.fn()} />);

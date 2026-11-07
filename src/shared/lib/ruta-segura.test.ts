@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { rutaInternaSegura } from "./ruta-segura";
 
+// El from del login no puede mandar al usuario fuera del sitio
 describe("rutaInternaSegura (anti open redirect)", () => {
   it.each([
     "//evil.com",

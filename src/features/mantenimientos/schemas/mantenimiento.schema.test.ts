@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { loginSchema } from "@/features/auth/schemas/login.schema";
 import { mantenimientoFormSchema, mantenimientoSchema, NOTAS_MAXIMO } from "./mantenimiento.schema";
 
+// Las notas son opcionales y llegan hasta 500 caracteres
 describe("mantenimientoFormSchema", () => {
   it("las notas son opcionales", () => {
     expect(mantenimientoFormSchema.safeParse({}).success).toBe(true);
@@ -17,6 +18,7 @@ describe("mantenimientoFormSchema", () => {
   });
 });
 
+// Un mantenimiento que llega del API; las notas pueden faltar
 describe("mantenimientoSchema", () => {
   const base = { id: 1, equipoId: 2, fecha: "2026-01-01T00:00:00Z", horometroAlRegistrar: 250 };
 
@@ -27,6 +29,7 @@ describe("mantenimientoSchema", () => {
   });
 });
 
+// El login pide usuario y contraseña, con los mismos límites del backend
 describe("loginSchema", () => {
   it("exige usuario y contraseña", () => {
     const r = loginSchema.safeParse({ username: "  ", password: "" });
