@@ -145,6 +145,11 @@ describe("cabeceras de seguridad (A02)", () => {
     expect(csp).toContain("upgrade-insecure-requests");
   });
 
+  it("upgrade-insecure-requests solo cuando se sirve por HTTPS", () => {
+    expect(construirCsp("n", true, false)).not.toContain("upgrade-insecure-requests");
+    expect(construirCsp("n", true, true)).toContain("upgrade-insecure-requests");
+  });
+
   it("en desarrollo permite eval (solo para React Refresh)", () => {
     expect(construirCsp("n", false)).toContain("'unsafe-eval'");
   });

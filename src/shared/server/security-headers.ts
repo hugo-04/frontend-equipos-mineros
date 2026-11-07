@@ -1,5 +1,9 @@
 /** Cabeceras de seguridad (A02). La CSP lleva nonce por petición: sin unsafe-inline ni unsafe-eval en scripts. */
-export function construirCsp(nonce: string, produccion: boolean): string {
+export function construirCsp(
+  nonce: string,
+  produccion: boolean,
+  https: boolean = produccion,
+): string {
   const directivas = [
     "default-src 'self'",
     // En desarrollo Next necesita eval (React Refresh); en producción nunca
@@ -13,7 +17,8 @@ export function construirCsp(nonce: string, produccion: boolean): string {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    ...(produccion ? ["upgrade-insecure-requests"] : []),
+    // Solo cuando la página se sirve por HTTPS: en http://localhost forzaría https y rompería el modo local
+    ...(https ? ["upgrade-insecure-requests"] : []),
   ];
   return directivas.join("; ");
 }

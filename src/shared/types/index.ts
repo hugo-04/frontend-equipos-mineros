@@ -10,7 +10,7 @@ export type PaginaBase = components["schemas"]["PaginaBase"];
 
 export type Pagina<T> = PaginaBase & { content: T[] };
 
-/** Parámetros de paginación (page desde 1; size de 1 a 100). */
+/** Parámetros de paginación (page desde 0, como Spring Data; size de 1 a 100). */
 export interface ParametrosPagina {
   page?: number;
   size?: number;

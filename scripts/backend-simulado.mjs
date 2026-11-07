@@ -36,7 +36,7 @@ const vista = (e) => {
   };
 };
 const pagina = (lista, q) => {
-  const page = Math.max(1, Number(q.get("page") ?? 1));
+  const page = Math.max(0, Number(q.get("page") ?? 0));
   const size = Math.min(100, Math.max(1, Number(q.get("size") ?? 20)));
   const total = lista.length;
   const totalPages = Math.max(1, Math.ceil(total / size));
@@ -45,9 +45,9 @@ const pagina = (lista, q) => {
     size,
     totalElements: total,
     totalPages,
-    first: page === 1,
-    last: page >= totalPages,
-    content: lista.slice((page - 1) * size, page * size),
+    first: page === 0,
+    last: page >= totalPages - 1,
+    content: lista.slice(page * size, (page + 1) * size),
   };
 };
 const error = (res, status, code, message) => {

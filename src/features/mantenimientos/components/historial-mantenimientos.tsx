@@ -20,7 +20,7 @@ import { formatearFecha, formatearHorometro } from "@/shared/lib/formatters";
 import { useMantenimientos } from "../hooks/use-mantenimientos";
 
 export function HistorialMantenimientos({ equipoId }: { equipoId: number }) {
-  const [pagina, setPagina] = useState(1);
+  const [pagina, setPagina] = useState(0);
   const historial = useMantenimientos(equipoId, pagina);
 
   return (
@@ -87,7 +87,7 @@ export function HistorialMantenimientos({ equipoId }: { equipoId: number }) {
                 className="flex items-center justify-between"
               >
                 <p className="text-muted-foreground text-sm">
-                  Página {historial.data.page} de {historial.data.totalPages}
+                  Página {historial.data.page + 1} de {historial.data.totalPages}
                 </p>
                 <div className="flex gap-2">
                   <Button

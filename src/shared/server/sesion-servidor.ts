@@ -14,7 +14,7 @@ export async function exigirSesion(rutaActual: string): Promise<void> {
     redirect(`/api/auth/sesion-invalida?from=${encodeURIComponent(rutaActual)}`);
   if (!tokenVigente(token)) return irAlLogin();
   try {
-    const respuesta = await llamarBackend("tipos?page=1&size=1", { metodo: "GET", token });
+    const respuesta = await llamarBackend("tipos?page=0&size=1", { metodo: "GET", token });
     if (respuesta.status !== 200) return irAlLogin();
   } catch {
     return irAlLogin();

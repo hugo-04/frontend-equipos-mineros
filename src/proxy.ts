@@ -24,7 +24,9 @@ function conSeguridad(respuesta: NextResponse, csp: string, esApi: boolean): Nex
 
 export function proxy(request: NextRequest): NextResponse {
   const nonce = btoa(crypto.randomUUID());
-  const csp = construirCsp(nonce, process.env.NODE_ENV === "production");
+  const https =
+    request.nextUrl.protocol === "https:" || request.headers.get("x-forwarded-proto") === "https";
+  const csp = construirCsp(nonce, process.env.NODE_ENV === "production", https);
   const { pathname, search } = request.nextUrl;
   const esApi = pathname.startsWith("/api/");
   const autenticado = tokenVigente(request.cookies.get(COOKIE_SESION)?.value);
