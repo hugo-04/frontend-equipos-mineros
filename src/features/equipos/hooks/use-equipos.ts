@@ -12,7 +12,7 @@ import {
 } from "../api/equipos.api";
 import type { EquipoRequest } from "../types";
 
-/** Claves de consulta centralizadas: nadie fuera de este archivo arma una clave a mano */
+/** Todas las claves de consulta salen de acá; ningún componente arma una a mano. Así invalidar es siempre consistente. */
 export const equipoKeys = {
   all: ["equipos"] as const,
   list: () => [...equipoKeys.all, "list"] as const,
@@ -20,6 +20,7 @@ export const equipoKeys = {
   mantenimientos: (id: number) => [...equipoKeys.all, "mantenimientos", id] as const,
 };
 
+/** Trae la lista de equipos. Al crear, editar o eliminar se invalida esta consulta y la tabla se refresca sola. */
 export function useEquipos() {
   return useQuery({
     queryKey: equipoKeys.list(),
@@ -29,6 +30,7 @@ export function useEquipos() {
   });
 }
 
+/** Trae un equipo por id. */
 export function useEquipo(id: number) {
   return useQuery({
     queryKey: equipoKeys.detail(id),
@@ -37,6 +39,7 @@ export function useEquipo(id: number) {
   });
 }
 
+/** Crea un equipo, refresca la lista y avisa con un toast. Un código repetido (409) se marca en el campo código. */
 export function useCrearEquipo(opciones: () => OpcionesManejo = () => ({})) {
   const cliente = useQueryClient();
   return useMutation({
@@ -49,6 +52,7 @@ export function useCrearEquipo(opciones: () => OpcionesManejo = () => ({})) {
   });
 }
 
+/** Edita un equipo y refresca la lista y el detalle. */
 export function useActualizarEquipo(id: number, opciones: () => OpcionesManejo = () => ({})) {
   const cliente = useQueryClient();
   return useMutation({
@@ -67,6 +71,7 @@ export function useActualizarEquipo(id: number, opciones: () => OpcionesManejo =
   });
 }
 
+/** Elimina un equipo y descarta lo que tenía en caché (detalle e historial) antes de refrescar la lista. */
 export function useEliminarEquipo() {
   const cliente = useQueryClient();
   return useMutation({

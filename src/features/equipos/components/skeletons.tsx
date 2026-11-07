@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
-/** Misma forma que la vista real (cabecera, filtros y filas) para que no haya saltos de layout al cargar */
+/** Esqueleto de la lista de equipos, con la misma forma que la vista real (cabecera, filtros y filas) para que el layout no salte al cargar. */
 export function EquiposSkeleton() {
   return (
     <div className="space-y-6" role="status" aria-label="Cargando equipos">
@@ -26,6 +26,7 @@ export function EquiposSkeleton() {
   );
 }
 
+/** Esqueleto del detalle de un equipo. */
 export function DetalleSkeleton() {
   return (
     <div className="space-y-6" role="status" aria-label="Cargando detalle">

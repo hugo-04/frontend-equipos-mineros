@@ -2,8 +2,8 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 
 /**
- * Estado de mantenimiento. Nunca se comunica solo con color: lleva ícono y texto.
- * OK = verde; requiere mantenimiento = ámbar con un pulso discreto (apagado con prefers-reduced-motion).
+ * Muestra si al equipo le toca mantenimiento. No depende solo del color: lleva ícono y texto. En verde es OK;
+ * en ámbar es "Requiere mantenimiento", con un pulso discreto que se apaga si el usuario pidió menos movimiento.
  */
 export function EstadoBadge({ requiereMantenimiento }: { requiereMantenimiento: boolean }) {
   if (requiereMantenimiento) {

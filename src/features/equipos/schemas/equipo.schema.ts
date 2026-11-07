@@ -2,7 +2,7 @@ import { z } from "zod";
 import { paginaSchema } from "@/shared/schemas/pagina";
 import { tipoEquipoSchema } from "@/features/tipos";
 
-/** Respuesta del API: se valida antes de usarla (A08). */
+/** Cómo tiene que verse un equipo que llega del API. Si la respuesta no lo cumple, no se usa. */
 export const equipoSchema = z.object({
   id: z.number().int().positive(),
   codigo: z.string(),
@@ -31,9 +31,9 @@ const textoHorometro = z
   );
 
 /**
- * Esquema del formulario de equipo, alineado con el contrato:
- * codigo 3–30 [A-Za-z0-9-]; tipoId entero > 0; horometro 0–999999.9 con un decimal como máximo.
- * `horometroMinimo`: al editar, el horómetro no puede bajar del valor actual.
+ * Las reglas del formulario de equipo, que son las mismas del contrato: el código tiene de 3 a 30 letras, números
+ * o guiones; el tipo es un entero mayor que 0; y el horómetro va de 0 a 999999.9 con un decimal como máximo.
+ * Al editar se pasa `horometroMinimo` (el valor actual) porque el horómetro no puede bajar.
  */
 export function crearEquipoFormSchema(opciones: { horometroMinimo?: number } = {}) {
   return z.object({

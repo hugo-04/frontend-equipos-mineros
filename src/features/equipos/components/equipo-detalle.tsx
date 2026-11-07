@@ -24,7 +24,7 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: ReactNode }) {
   );
 }
 
-/** Datos del equipo. Las acciones y el historial los compone la página (así equipos no depende de mantenimientos). */
+/** Los datos del equipo y su estado. Las acciones y el historial los arma la página que lo usa, así esta feature no depende de mantenimientos. */
 export function EquipoDetalle({
   id,
   acciones,

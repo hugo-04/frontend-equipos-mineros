@@ -46,6 +46,7 @@ const entrada = (indice: number) => ({
   exit: { opacity: 0, y: -4, transition: { duration: 0.15 } },
 });
 
+/** La pantalla de equipos: tabla (o tarjetas en móvil) con búsqueda y filtros que se aplican en el cliente, más crear, editar y eliminar. */
 export function EquiposView() {
   const equipos = useEquipos();
   const tipos = useTipos();
@@ -178,7 +179,7 @@ export function EquiposView() {
             />
           ) : (
             <>
-              {/* Tabla en pantallas medianas y grandes */}
+              {/* La tabla se ve desde pantallas medianas; en móvil se usan las tarjetas de más abajo */}
               <div className="hidden rounded-lg border md:block">
                 <Table>
                   <caption className="sr-only">Lista de equipos mineros</caption>
@@ -221,7 +222,7 @@ export function EquiposView() {
                 </Table>
               </div>
 
-              {/* Tarjetas en móvil */}
+              {/* Tarjetas para pantallas chicas */}
               <ul className="space-y-3 md:hidden">
                 <AnimatePresence initial={false}>
                   {visibles.map((e, i) => (

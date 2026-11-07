@@ -35,10 +35,11 @@ const CAMPOS = ["codigo", "tipoId", "horometro"] as const;
 interface Props {
   abierto: boolean;
   alCambiar: (abierto: boolean) => void;
-  /** Si viene, el formulario edita ese equipo; si no, crea uno nuevo */
+  /** Con un equipo, el formulario lo edita; sin él, crea uno nuevo. */
   equipo?: Equipo | null;
 }
 
+/** Diálogo para crear o editar un equipo. Valida con Zod antes de enviar y pone los errores del backend junto a cada campo. */
 export function EquipoFormDialog({ abierto, alCambiar, equipo }: Props) {
   const editando = Boolean(equipo);
   const esquema = useMemo(
@@ -59,7 +60,7 @@ export function EquipoFormDialog({ abierto, alCambiar, equipo }: Props) {
     defaultValues: { codigo: "", tipoId: "", horometro: "" },
   });
 
-  // Al abrir se cargan los valores del equipo (o se vacía para crear)
+  // Al abrir se cargan los datos del equipo, o se vacía el formulario si es uno nuevo
   useEffect(() => {
     if (!abierto) return;
     reset(

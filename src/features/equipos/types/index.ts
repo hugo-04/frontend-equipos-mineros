@@ -3,7 +3,7 @@ import type { equipoSchema } from "../schemas/equipo.schema";
 
 export type Equipo = z.infer<typeof equipoSchema>;
 
-/** Cuerpo que acepta el backend para crear o editar (EquipoRequest del contrato) */
+/** El cuerpo que recibe el backend para crear o editar un equipo (el EquipoRequest del contrato). */
 export interface EquipoRequest {
   codigo: string;
   tipoId: number;
