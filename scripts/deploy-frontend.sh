@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
-# Despliega el frontend en Vercel. Pensado para que el deploy.sh principal lo invoque, o para correrlo solo.
+# Despliega el frontend en Vercel, comprueba que responde y, si no, intenta volver a la versión anterior.
+# Se puede correr solo o desde el deploy.sh principal.
 #
 #   VERCEL_TOKEN=... VERCEL_ORG_ID=... VERCEL_PROJECT_ID=... APP_URL=https://mi-app.vercel.app ./scripts/deploy-frontend.sh
 #
 # Variables obligatorias:
 #   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID  credenciales del proyecto de Vercel (nunca se imprimen)
-#   APP_URL                                         URL pública del frontend, para verificar el despliegue
+#   APP_URL                                         URL pública del frontend, para comprobar el despliegue
 # Variables opcionales:
-#   HEALTH_RETRIES (por defecto 12) y HEALTH_INTERVAL en segundos (por defecto 5)
-#   OMITIR_PRUEBAS=1  omite lint/typecheck/test (solo si CI ya los corrió)
-#   SIMULATE_FAILURE=health  simula que la verificación falla, para demostrar el rollback
+#   HEALTH_RETRIES (12 por defecto) y HEALTH_INTERVAL en segundos (5 por defecto)
+#   OMITIR_PRUEBAS=1  se salta lint, typecheck y pruebas (solo si el CI ya las corrió)
+#   SIMULATE_FAILURE=health  hace que la verificación falle a propósito, para demostrar el rollback
 #
-# Códigos de salida: 0 ok · 1 falta una herramienta o variable · 2 falló el despliegue y se hizo rollback
-#                    3 falló la verificación y no había a qué volver / el rollback también falló · 4 falló la construcción
-# Se puede ejecutar varias veces seguidas: cada ejecución construye y publica una versión nueva sin romper la anterior.
+# Códigos de salida: 0 salió bien · 1 falta una herramienta o variable · 2 falló el despliegue y se hizo rollback
+#                    3 falló la verificación y no había a qué volver, o el rollback también falló · 4 falló la construcción o las pruebas
+# Se puede ejecutar varias veces seguidas: cada corrida construye y publica una versión nueva sin romper la anterior.
 set -euo pipefail
 
 VERCEL_CLI_VERSION="${VERCEL_CLI_VERSION:-65.12.1}"

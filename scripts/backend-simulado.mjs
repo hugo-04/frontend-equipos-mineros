@@ -1,6 +1,6 @@
-// Backend simulado SOLO para pruebas locales y para el escaneo ZAP del CI. No es el backend real:
-// responde con la misma forma del contrato (login, tipos, equipos, mantenimientos paginados).
-// Uso: PUERTO=8080 node scripts/backend-simulado.mjs
+// Backend simulado, solo para trabajar en local sin el backend real y para el escaneo ZAP del CI. No es el de
+// verdad: responde con la misma forma del contrato (login, tipos, equipos y mantenimientos paginados).
+// Para usarlo: PUERTO=8080 node scripts/backend-simulado.mjs
 import { createServer } from "node:http";
 
 const PUERTO = Number(process.env.PUERTO ?? 8080);
