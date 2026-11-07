@@ -16,8 +16,7 @@ const REGLAS: { metodo: Metodo; patron: RegExp }[] = [
 ];
 
 export type ResultadoPolitica =
-  | { permitido: true; ruta: string; query: string }
-  | { permitido: false; motivo: string };
+  { permitido: true; ruta: string; query: string } | { permitido: false; motivo: string };
 
 export const METODOS_ESCRITURA = new Set(["POST", "PUT", "DELETE", "PATCH"]);
 
@@ -37,7 +36,8 @@ export function evaluarRuta(
   segmentos: readonly string[],
   params: URLSearchParams,
 ): ResultadoPolitica {
-  if (segmentos.length === 0 || segmentos.length > 4) return { permitido: false, motivo: "ruta fuera de la lista" };
+  if (segmentos.length === 0 || segmentos.length > 4)
+    return { permitido: false, motivo: "ruta fuera de la lista" };
   for (const s of segmentos) {
     if (s === "" || s === "." || s === ".." || /[\\/%:?#@\u0000-\u001f\u007f]/.test(s)) {
       return { permitido: false, motivo: "segmento sospechoso" };

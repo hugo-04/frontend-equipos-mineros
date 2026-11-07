@@ -15,9 +15,19 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 import { useActualizarEquipo, useCrearEquipo } from "../hooks/use-equipos";
-import { crearEquipoFormSchema, type EquipoFormInput, type EquipoFormValues } from "../schemas/equipo.schema";
+import {
+  crearEquipoFormSchema,
+  type EquipoFormInput,
+  type EquipoFormValues,
+} from "../schemas/equipo.schema";
 import type { Equipo } from "../types";
 
 const CAMPOS = ["codigo", "tipoId", "horometro"] as const;
@@ -54,14 +64,19 @@ export function EquipoFormDialog({ abierto, alCambiar, equipo }: Props) {
     if (!abierto) return;
     reset(
       equipo
-        ? { codigo: equipo.codigo, tipoId: String(equipo.tipo.id), horometro: String(equipo.horometro) }
+        ? {
+            codigo: equipo.codigo,
+            tipoId: String(equipo.tipo.id),
+            horometro: String(equipo.horometro),
+          }
         : { codigo: "", tipoId: "", horometro: "" },
     );
   }, [abierto, equipo, reset]);
 
   const opciones = () => ({
     campos: CAMPOS,
-    ponerErrorEnCampo: (campo: string, mensaje: string) => setError(campo as (typeof CAMPOS)[number], { message: mensaje }),
+    ponerErrorEnCampo: (campo: string, mensaje: string) =>
+      setError(campo as (typeof CAMPOS)[number], { message: mensaje }),
   });
   const crear = useCrearEquipo(opciones);
   const actualizar = useActualizarEquipo(equipo?.id ?? 0, opciones);
@@ -78,13 +93,25 @@ export function EquipoFormDialog({ abierto, alCambiar, equipo }: Props) {
         <DialogHeader>
           <DialogTitle>{editando ? `Editar ${equipo?.codigo}` : "Nuevo equipo"}</DialogTitle>
           <DialogDescription>
-            {editando ? "El horómetro no puede bajar del valor actual." : "Registra un equipo con su horómetro actual."}
+            {editando
+              ? "El horómetro no puede bajar del valor actual."
+              : "Registra un equipo con su horómetro actual."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={guardar} noValidate className="space-y-4">
-          <CampoFormulario id="codigo" etiqueta="Código" error={errors.codigo?.message} ayuda="3 a 30 caracteres: letras, números y guiones">
-            <Input {...propsAccesibles("codigo", errors.codigo?.message)} disabled={enviando} autoComplete="off" {...register("codigo")} />
+          <CampoFormulario
+            id="codigo"
+            etiqueta="Código"
+            error={errors.codigo?.message}
+            ayuda="3 a 30 caracteres: letras, números y guiones"
+          >
+            <Input
+              {...propsAccesibles("codigo", errors.codigo?.message)}
+              disabled={enviando}
+              autoComplete="off"
+              {...register("codigo")}
+            />
           </CampoFormulario>
 
           <CampoFormulario id="tipoId" etiqueta="Tipo de equipo" error={errors.tipoId?.message}>
@@ -92,9 +119,18 @@ export function EquipoFormDialog({ abierto, alCambiar, equipo }: Props) {
               control={control}
               name="tipoId"
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange} disabled={enviando || tipos.isPending}>
-                  <SelectTrigger {...propsAccesibles("tipoId", errors.tipoId?.message)} onBlur={field.onBlur}>
-                    <SelectValue placeholder={tipos.isPending ? "Cargando tipos…" : "Selecciona un tipo"} />
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={enviando || tipos.isPending}
+                >
+                  <SelectTrigger
+                    {...propsAccesibles("tipoId", errors.tipoId?.message)}
+                    onBlur={field.onBlur}
+                  >
+                    <SelectValue
+                      placeholder={tipos.isPending ? "Cargando tipos…" : "Selecciona un tipo"}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {(tipos.data ?? []).map((t) => (
@@ -108,12 +144,28 @@ export function EquipoFormDialog({ abierto, alCambiar, equipo }: Props) {
             />
           </CampoFormulario>
 
-          <CampoFormulario id="horometro" etiqueta="Horómetro (horas)" error={errors.horometro?.message} ayuda="Entre 0 y 999999.9, con un decimal como máximo">
-            <Input {...propsAccesibles("horometro", errors.horometro?.message)} inputMode="decimal" disabled={enviando} autoComplete="off" {...register("horometro")} />
+          <CampoFormulario
+            id="horometro"
+            etiqueta="Horómetro (horas)"
+            error={errors.horometro?.message}
+            ayuda="Entre 0 y 999999.9, con un decimal como máximo"
+          >
+            <Input
+              {...propsAccesibles("horometro", errors.horometro?.message)}
+              inputMode="decimal"
+              disabled={enviando}
+              autoComplete="off"
+              {...register("horometro")}
+            />
           </CampoFormulario>
 
           <DialogFooter>
-            <Button type="button" variant="outline" disabled={enviando} onClick={() => alCambiar(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={enviando}
+              onClick={() => alCambiar(false)}
+            >
               Cancelar
             </Button>
             <Button type="submit" cargando={enviando}>

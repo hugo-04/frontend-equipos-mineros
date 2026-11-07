@@ -14,4 +14,7 @@ export function paginaSchema<T>(item: ZodType<T>): ZodType<Pagina<T>> {
   }) as unknown as ZodType<Pagina<T>>;
 }
 
-export const idSchema = z.number().int("El id debe ser un entero").positive("El id debe ser mayor que 0");
+export const idSchema = z
+  .number()
+  .int("El id debe ser un entero")
+  .positive("El id debe ser mayor que 0");

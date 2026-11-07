@@ -66,7 +66,12 @@ export function apiErrorDesdeRespuesta(
   const parsed = errorResponseSchema.safeParse(cuerpo);
   const segundos = retryAfter && /^\d+$/.test(retryAfter) ? Number(retryAfter) : undefined;
   if (!parsed.success) {
-    return new ApiError({ status, code: "RESPUESTA_INVALIDA", message: "", retryAfterSegundos: segundos });
+    return new ApiError({
+      status,
+      code: "RESPUESTA_INVALIDA",
+      message: "",
+      retryAfterSegundos: segundos,
+    });
   }
   const e = parsed.data;
   return new ApiError({
@@ -75,14 +80,21 @@ export function apiErrorDesdeRespuesta(
     message: e.message,
     traceId: e.traceId,
     retryAfterSegundos: segundos,
-    details: (e.details ?? []).map((d) => ({ field: d.field, reason: d.reason ?? d.message ?? "" })),
+    details: (e.details ?? []).map((d) => ({
+      field: d.field,
+      reason: d.reason ?? d.message ?? "",
+    })),
   });
 }
 
 /** La respuesta no cumple el contrato (falla la validación con Zod) o no llegó: se trata como error de sistema. */
 export class RespuestaInvalidaError extends ApiError {
   constructor() {
-    super({ status: 502, code: "RESPUESTA_INVALIDA", message: "La respuesta del servidor no es válida" });
+    super({
+      status: 502,
+      code: "RESPUESTA_INVALIDA",
+      message: "La respuesta del servidor no es válida",
+    });
     this.name = "RespuestaInvalidaError";
   }
 }

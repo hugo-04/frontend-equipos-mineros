@@ -10,7 +10,8 @@ import { leerToken } from "./session";
  */
 export async function exigirSesion(rutaActual: string): Promise<void> {
   const token = await leerToken();
-  const irAlLogin = () => redirect(`/api/auth/sesion-invalida?from=${encodeURIComponent(rutaActual)}`);
+  const irAlLogin = () =>
+    redirect(`/api/auth/sesion-invalida?from=${encodeURIComponent(rutaActual)}`);
   if (!tokenVigente(token)) return irAlLogin();
   try {
     const respuesta = await llamarBackend("tipos?page=1&size=1", { metodo: "GET", token });

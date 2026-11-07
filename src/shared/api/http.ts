@@ -26,7 +26,10 @@ interface OpcionesPeticion<T> {
   rutaPropia?: boolean;
 }
 
-export async function peticion<T = void>(ruta: string, opciones: OpcionesPeticion<T> = {}): Promise<T> {
+export async function peticion<T = void>(
+  ruta: string,
+  opciones: OpcionesPeticion<T> = {},
+): Promise<T> {
   const { metodo = "GET", cuerpo, esquema, signal, rutaPropia = false } = opciones;
   const url = rutaPropia ? ruta : `${BASE_PROXY}${ruta}`;
 
@@ -38,7 +41,10 @@ export async function peticion<T = void>(ruta: string, opciones: OpcionesPeticio
   try {
     respuesta = await fetch(url, {
       method: metodo,
-      headers: cuerpo === undefined ? { Accept: "application/json" } : { Accept: "application/json", "Content-Type": "application/json" },
+      headers:
+        cuerpo === undefined
+          ? { Accept: "application/json" }
+          : { Accept: "application/json", "Content-Type": "application/json" },
       body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
       credentials: "same-origin",
       cache: "no-store",
@@ -60,7 +66,11 @@ export async function peticion<T = void>(ruta: string, opciones: OpcionesPeticio
   }
 
   if (!respuesta.ok) {
-    const error = apiErrorDesdeRespuesta(respuesta.status, json, respuesta.headers.get("Retry-After"));
+    const error = apiErrorDesdeRespuesta(
+      respuesta.status,
+      json,
+      respuesta.headers.get("Retry-After"),
+    );
     // Las rutas /api/auth/login responden 401 por credenciales malas: eso no es "sesión vencida"
     if (respuesta.status === 401 && !rutaPropia) manejador401?.();
     throw error;

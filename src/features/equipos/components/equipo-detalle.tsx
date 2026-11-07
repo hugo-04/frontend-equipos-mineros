@@ -18,14 +18,22 @@ import { DetalleSkeleton } from "./skeletons";
 function Dato({ etiqueta, valor }: { etiqueta: string; valor: ReactNode }) {
   return (
     <div>
-      <dt className="text-sm text-muted-foreground">{etiqueta}</dt>
+      <dt className="text-muted-foreground text-sm">{etiqueta}</dt>
       <dd className="mt-1 font-semibold tabular-nums">{valor}</dd>
     </div>
   );
 }
 
 /** Datos del equipo. Las acciones y el historial los compone la página (así equipos no depende de mantenimientos). */
-export function EquipoDetalle({ id, acciones, children }: { id: number; acciones?: (equipoRequiere: boolean) => ReactNode; children?: ReactNode }) {
+export function EquipoDetalle({
+  id,
+  acciones,
+  children,
+}: {
+  id: number;
+  acciones?: (equipoRequiere: boolean) => ReactNode;
+  children?: ReactNode;
+}) {
   const equipo = useEquipo(id);
 
   if (equipo.isPending) return <DetalleSkeleton />;
@@ -48,12 +56,24 @@ export function EquipoDetalle({ id, acciones, children }: { id: number; acciones
 
   const e = equipo.data;
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }} className="space-y-6">
-      <Link href="/equipos" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22 }}
+      className="space-y-6"
+    >
+      <Link
+        href="/equipos"
+        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
+      >
         <ArrowLeft className="size-4" aria-hidden="true" />
         Volver a equipos
       </Link>
-      <PageHeader titulo={e.codigo} descripcion={`${e.tipo.nombre} · mantenimiento cada ${e.tipo.intervaloHoras} h`} acciones={acciones?.(e.requiereMantenimiento)} />
+      <PageHeader
+        titulo={e.codigo}
+        descripcion={`${e.tipo.nombre} · mantenimiento cada ${e.tipo.intervaloHoras} h`}
+        acciones={acciones?.(e.requiereMantenimiento)}
+      />
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle>Estado</CardTitle>
@@ -62,7 +82,10 @@ export function EquipoDetalle({ id, acciones, children }: { id: number; acciones
         <CardContent>
           <dl className="grid gap-4 sm:grid-cols-3">
             <Dato etiqueta="Horómetro actual" valor={formatearHorometro(e.horometro)} />
-            <Dato etiqueta="Último mantenimiento a las" valor={formatearHorometro(e.horometroUltimoMant)} />
+            <Dato
+              etiqueta="Último mantenimiento a las"
+              valor={formatearHorometro(e.horometroUltimoMant)}
+            />
             <Dato etiqueta="Registrado" valor={formatearFecha(e.creadoEn)} />
           </dl>
         </CardContent>

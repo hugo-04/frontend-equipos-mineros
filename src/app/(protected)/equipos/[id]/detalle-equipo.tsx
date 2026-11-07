@@ -8,7 +8,10 @@ export function DetalleEquipo({ id }: { id: number }) {
   const equipo = useEquipo(id);
   const codigo = equipo.data?.codigo ?? "";
   return (
-    <EquipoDetalle id={id} acciones={() => <RegistrarMantenimientoDialog equipoId={id} codigo={codigo} />}>
+    <EquipoDetalle
+      id={id}
+      acciones={() => <RegistrarMantenimientoDialog equipoId={id} codigo={codigo} />}
+    >
       <HistorialMantenimientos equipoId={id} />
     </EquipoDetalle>
   );

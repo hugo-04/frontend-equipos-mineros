@@ -3,7 +3,13 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { handleMutationError, type OpcionesManejo } from "@/shared/api/error-handler";
-import { actualizarEquipo, crearEquipo, eliminarEquipo, listarEquipos, obtenerEquipo } from "../api/equipos.api";
+import {
+  actualizarEquipo,
+  crearEquipo,
+  eliminarEquipo,
+  listarEquipos,
+  obtenerEquipo,
+} from "../api/equipos.api";
 import type { EquipoRequest } from "../types";
 
 /** Claves de consulta centralizadas: nadie fuera de este archivo arma una clave a mano */

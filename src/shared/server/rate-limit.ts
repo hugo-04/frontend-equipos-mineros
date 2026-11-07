@@ -30,7 +30,8 @@ export class LimitadorLogin {
   registrarFallo(clave: string, ahora = Date.now()): void {
     if (this.ventanas.size >= this.maxClaves) this.limpiar(ahora);
     const v = this.ventanas.get(clave);
-    if (!v || ahora - v.desde >= this.ventanaMs) this.ventanas.set(clave, { fallos: 1, desde: ahora });
+    if (!v || ahora - v.desde >= this.ventanaMs)
+      this.ventanas.set(clave, { fallos: 1, desde: ahora });
     else v.fallos += 1;
   }
 
@@ -39,7 +40,8 @@ export class LimitadorLogin {
   }
 
   private limpiar(ahora: number): void {
-    for (const [clave, v] of this.ventanas) if (ahora - v.desde >= this.ventanaMs) this.ventanas.delete(clave);
+    for (const [clave, v] of this.ventanas)
+      if (ahora - v.desde >= this.ventanaMs) this.ventanas.delete(clave);
     // Si aun así está lleno, se descarta lo más antiguo para no crecer sin límite
     if (this.ventanas.size >= this.maxClaves) {
       const primera = this.ventanas.keys().next().value;
@@ -53,5 +55,7 @@ export const limitadorLogin = new LimitadorLogin();
 /** IP del cliente según el proxy de confianza del hosting; si no hay, una clave común (más estricto) */
 export function ipDelCliente(headers: Headers): string {
   const reenviada = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return reenviada && reenviada.length <= 64 ? reenviada : headers.get("x-real-ip")?.trim() || "desconocida";
+  return reenviada && reenviada.length <= 64
+    ? reenviada
+    : headers.get("x-real-ip")?.trim() || "desconocida";
 }

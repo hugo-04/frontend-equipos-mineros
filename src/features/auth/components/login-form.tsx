@@ -14,15 +14,23 @@ export function LoginForm({ destino }: { destino: string }) {
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<LoginValues>({ resolver: zodResolver(loginSchema), defaultValues: { username: "", password: "" } });
+  } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { username: "", password: "" },
+  });
 
   const login = useLogin(destino, () => ({
     campos: ["username", "password"],
-    ponerErrorEnCampo: (campo, mensaje) => setError(campo as keyof LoginValues, { message: mensaje }),
+    ponerErrorEnCampo: (campo, mensaje) =>
+      setError(campo as keyof LoginValues, { message: mensaje }),
   }));
 
   return (
-    <form onSubmit={handleSubmit((valores) => login.mutate(valores))} noValidate className="space-y-4">
+    <form
+      onSubmit={handleSubmit((valores) => login.mutate(valores))}
+      noValidate
+      className="space-y-4"
+    >
       <CampoFormulario id="username" etiqueta="Usuario" error={errors.username?.message}>
         <Input
           {...propsAccesibles("username", errors.username?.message)}
@@ -42,7 +50,7 @@ export function LoginForm({ destino }: { destino: string }) {
         />
       </CampoFormulario>
       {login.isError && login.error instanceof Error && login.error.name === "ApiError" && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-destructive text-sm">
           {/* Mensaje genérico del backend: no revela si el usuario existe */}
           {(login.error as Error).message || "No se pudo iniciar sesión"}
         </p>

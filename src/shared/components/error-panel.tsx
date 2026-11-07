@@ -16,10 +16,13 @@ export function ErrorPanel({ error, alReintentar }: { error: unknown; alReintent
         ? "No pudimos conectarnos. Revisa tu conexión e inténtalo de nuevo."
         : MENSAJE_SISTEMA;
   return (
-    <div role="alert" className="flex flex-col items-center gap-3 rounded-lg border border-destructive/40 px-6 py-12 text-center">
-      <AlertTriangle className="size-8 text-destructive" aria-hidden="true" />
+    <div
+      role="alert"
+      className="border-destructive/40 flex flex-col items-center gap-3 rounded-lg border px-6 py-12 text-center"
+    >
+      <AlertTriangle className="text-destructive size-8" aria-hidden="true" />
       <p className="font-semibold">{mensaje}</p>
-      {traceId && <p className="text-xs text-muted-foreground">Código de error: {traceId}</p>}
+      {traceId && <p className="text-muted-foreground text-xs">Código de error: {traceId}</p>}
       {alReintentar && (
         <Button variant="outline" onClick={alReintentar}>
           Reintentar

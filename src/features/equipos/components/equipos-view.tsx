@@ -11,8 +11,21 @@ import { ErrorPanel } from "@/shared/components/error-panel";
 import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/shared/components/ui/table";
 import { formatearHorometro } from "@/shared/lib/formatters";
 import { useEliminarEquipo, useEquipos } from "../hooks/use-equipos";
 import type { Equipo } from "../types";
@@ -25,7 +38,11 @@ type FiltroEstado = "todos" | "requiere" | "ok";
 
 const entrada = (indice: number) => ({
   initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.22, delay: Math.min(indice * 0.03, 0.3), ease: "easeOut" as const } },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.22, delay: Math.min(indice * 0.03, 0.3), ease: "easeOut" as const },
+  },
   exit: { opacity: 0, y: -4, transition: { duration: 0.15 } },
 });
 
@@ -64,13 +81,16 @@ export function EquiposView() {
     setEnEdicion(equipo);
     setFormAbierto(true);
   };
-  const cambiarFiltro = <T,>(setter: (v: T) => void) => (valor: T) => {
-    setter(valor);
-    setPagina(1);
-  };
+  const cambiarFiltro =
+    <T,>(setter: (v: T) => void) =>
+    (valor: T) => {
+      setter(valor);
+      setPagina(1);
+    };
 
   if (equipos.isPending) return <EquiposSkeleton />;
-  if (equipos.isError) return <ErrorPanel error={equipos.error} alReintentar={() => void equipos.refetch()} />;
+  if (equipos.isError)
+    return <ErrorPanel error={equipos.error} alReintentar={() => void equipos.refetch()} />;
 
   const sinDatos = equipos.data.length === 0;
 
@@ -98,7 +118,10 @@ export function EquiposView() {
         <>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" aria-hidden="true" />
+              <Search
+                className="text-muted-foreground pointer-events-none absolute top-3 left-3 size-4"
+                aria-hidden="true"
+              />
               <Input
                 aria-label="Buscar por código"
                 placeholder="Buscar por código"
@@ -120,7 +143,10 @@ export function EquiposView() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={estadoFiltro} onValueChange={(v) => cambiarFiltro(setEstadoFiltro)(v as FiltroEstado)}>
+            <Select
+              value={estadoFiltro}
+              onValueChange={(v) => cambiarFiltro(setEstadoFiltro)(v as FiltroEstado)}
+            >
               <SelectTrigger aria-label="Filtrar por estado">
                 <SelectValue />
               </SelectTrigger>
@@ -168,15 +194,25 @@ export function EquiposView() {
                   <TableBody>
                     <AnimatePresence initial={false} mode="popLayout">
                       {visibles.map((e, i) => (
-                        <motion.tr key={e.id} {...entrada(i)} className="border-b transition-colors hover:bg-muted/50">
+                        <motion.tr
+                          key={e.id}
+                          {...entrada(i)}
+                          className="hover:bg-muted/50 border-b transition-colors"
+                        >
                           <TableCell className="font-medium">{e.codigo}</TableCell>
                           <TableCell>{e.tipo.nombre}</TableCell>
-                          <TableCell className="text-right tabular-nums">{formatearHorometro(e.horometro)}</TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatearHorometro(e.horometro)}
+                          </TableCell>
                           <TableCell>
                             <EstadoBadge requiereMantenimiento={e.requiereMantenimiento} />
                           </TableCell>
                           <TableCell>
-                            <Acciones equipo={e} alEditar={abrirEditar} alEliminar={setPorEliminar} />
+                            <Acciones
+                              equipo={e}
+                              alEditar={abrirEditar}
+                              alEliminar={setPorEliminar}
+                            />
                           </TableCell>
                         </motion.tr>
                       ))}
@@ -189,15 +225,21 @@ export function EquiposView() {
               <ul className="space-y-3 md:hidden">
                 <AnimatePresence initial={false}>
                   {visibles.map((e, i) => (
-                    <motion.li key={e.id} {...entrada(i)} className="space-y-3 rounded-lg border bg-card p-4">
+                    <motion.li
+                      key={e.id}
+                      {...entrada(i)}
+                      className="bg-card space-y-3 rounded-lg border p-4"
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="font-semibold">{e.codigo}</p>
-                          <p className="text-sm text-muted-foreground">{e.tipo.nombre}</p>
+                          <p className="text-muted-foreground text-sm">{e.tipo.nombre}</p>
                         </div>
                         <EstadoBadge requiereMantenimiento={e.requiereMantenimiento} />
                       </div>
-                      <p className="text-sm tabular-nums">Horómetro: {formatearHorometro(e.horometro)}</p>
+                      <p className="text-sm tabular-nums">
+                        Horómetro: {formatearHorometro(e.horometro)}
+                      </p>
                       <Acciones equipo={e} alEditar={abrirEditar} alEliminar={setPorEliminar} />
                     </motion.li>
                   ))}
@@ -206,14 +248,24 @@ export function EquiposView() {
 
               {totalPaginas > 1 && (
                 <nav aria-label="Paginación" className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Página {paginaActual} de {totalPaginas} · {filtrados.length} resultados
                   </p>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" disabled={paginaActual === 1} onClick={() => setPagina(paginaActual - 1)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={paginaActual === 1}
+                      onClick={() => setPagina(paginaActual - 1)}
+                    >
                       Anterior
                     </Button>
-                    <Button variant="outline" size="sm" disabled={paginaActual === totalPaginas} onClick={() => setPagina(paginaActual + 1)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={paginaActual === totalPaginas}
+                      onClick={() => setPagina(paginaActual + 1)}
+                    >
                       Siguiente
                     </Button>
                   </div>
@@ -232,14 +284,17 @@ export function EquiposView() {
         titulo="¿Eliminar equipo?"
         descripcion={
           <>
-            Se eliminará el equipo <strong>{porEliminar?.codigo}</strong> junto con todo su historial de mantenimientos. Esta
-            acción no se puede deshacer.
+            Se eliminará el equipo <strong>{porEliminar?.codigo}</strong> junto con todo su
+            historial de mantenimientos. Esta acción no se puede deshacer.
           </>
         }
         cargando={eliminar.isPending}
         alConfirmar={() => {
           if (porEliminar) {
-            eliminar.mutate({ id: porEliminar.id, codigo: porEliminar.codigo }, { onSettled: () => setPorEliminar(null) });
+            eliminar.mutate(
+              { id: porEliminar.id, codigo: porEliminar.codigo },
+              { onSettled: () => setPorEliminar(null) },
+            );
           }
         }}
       />
@@ -263,10 +318,20 @@ function Acciones({
           <Eye aria-hidden="true" />
         </Link>
       </Button>
-      <Button variant="ghost" size="icon" aria-label={`Editar ${equipo.codigo}`} onClick={() => alEditar(equipo)}>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={`Editar ${equipo.codigo}`}
+        onClick={() => alEditar(equipo)}
+      >
         <Pencil aria-hidden="true" />
       </Button>
-      <Button variant="ghost" size="icon" aria-label={`Eliminar ${equipo.codigo}`} onClick={() => alEliminar(equipo)}>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={`Eliminar ${equipo.codigo}`}
+        onClick={() => alEliminar(equipo)}
+      >
         <Trash2 className="text-destructive" aria-hidden="true" />
       </Button>
     </div>

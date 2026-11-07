@@ -57,16 +57,31 @@ async function manejar(request: NextRequest, contexto: Contexto): Promise<NextRe
     respuesta = await llamarBackend(`${politica.ruta}${politica.query}`, { metodo, token, cuerpo });
   } catch (error) {
     const agotado = error instanceof Error && error.name === "AbortError";
-    registrar("error", agotado ? "proxy: timeout del backend" : "proxy: backend inaccesible", { metodo });
-    return errorJson(agotado ? 504 : 503, "SERVICIO_NO_DISPONIBLE", "Servicio no disponible", rutaPublica);
+    registrar("error", agotado ? "proxy: timeout del backend" : "proxy: backend inaccesible", {
+      metodo,
+    });
+    return errorJson(
+      agotado ? 504 : 503,
+      "SERVICIO_NO_DISPONIBLE",
+      "Servicio no disponible",
+      rutaPublica,
+    );
   }
 
   if (respuesta.status === 401) {
-    registrar("warn", "proxy: el backend rechazó el token", { traceId: respuesta.traceId ?? undefined });
+    registrar("warn", "proxy: el backend rechazó el token", {
+      traceId: respuesta.traceId ?? undefined,
+    });
   } else if (respuesta.status === 403) {
-    registrar("warn", "proxy: acceso denegado", { metodo, traceId: respuesta.traceId ?? undefined });
+    registrar("warn", "proxy: acceso denegado", {
+      metodo,
+      traceId: respuesta.traceId ?? undefined,
+    });
   } else if (respuesta.status >= 500) {
-    registrar("error", "proxy: error del backend", { status: respuesta.status, traceId: respuesta.traceId ?? undefined });
+    registrar("error", "proxy: error del backend", {
+      status: respuesta.status,
+      traceId: respuesta.traceId ?? undefined,
+    });
   }
 
   const headers: Record<string, string> = { ...CABECERAS_NO_STORE };

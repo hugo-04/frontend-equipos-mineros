@@ -1,5 +1,10 @@
 import { peticion } from "@/shared/api/http";
-import { loginSchema, sesionRespuestaSchema, type LoginValues, type SesionRespuesta } from "../schemas/login.schema";
+import {
+  loginSchema,
+  sesionRespuestaSchema,
+  type LoginValues,
+  type SesionRespuesta,
+} from "../schemas/login.schema";
 
 /** Llama a la ruta propia /api/auth/login; el token queda en una cookie httpOnly y nunca llega al JavaScript. */
 export function iniciarSesion(credenciales: LoginValues): Promise<SesionRespuesta> {

@@ -2,10 +2,15 @@
  * A01: el parámetro `from` del login solo puede ser una ruta relativa interna.
  * Evita redirecciones abiertas: rechaza `//evil.com`, `https://…`, `/\evil`, esquemas y caracteres de control.
  */
-export function rutaInternaSegura(valor: string | null | undefined, porDefecto = "/equipos"): string {
+export function rutaInternaSegura(
+  valor: string | null | undefined,
+  porDefecto = "/equipos",
+): string {
   if (typeof valor !== "string" || valor.length === 0 || valor.length > 200) return porDefecto;
   if (!valor.startsWith("/") || valor.startsWith("//")) return porDefecto;
   if (valor.includes("\\") || /[\u0000-\u001f\u007f]/.test(valor)) return porDefecto;
+  // Tampoco se aceptan saltos de línea, nulos o barras invertidas codificados (%0d %0a %00 %5c)
+  if (/%(0[0-9a-f]|1[0-9a-f]|7f|5c)/i.test(valor)) return porDefecto;
   // Un esquema (javascript:, https:) o un host nunca puede aparecer antes del primer "/"
   try {
     const base = "http://interno.invalid";

@@ -38,7 +38,9 @@ export interface OpcionesManejo {
 }
 
 function conTraza(error: unknown): string | undefined {
-  return error instanceof ApiError && error.traceId ? `Código de error: ${error.traceId}` : undefined;
+  return error instanceof ApiError && error.traceId
+    ? `Código de error: ${error.traceId}`
+    : undefined;
 }
 
 /**
@@ -80,7 +82,9 @@ export function handleMutationError(error: unknown, opciones: OpcionesManejo = {
     case "rateLimited": {
       const espera = api?.retryAfterSegundos;
       toast.warning(
-        espera ? `Demasiados intentos. Espera ${Math.ceil(espera / 60)} min e inténtalo de nuevo.` : "Demasiados intentos. Espera un momento.",
+        espera
+          ? `Demasiados intentos. Espera ${Math.ceil(espera / 60)} min e inténtalo de nuevo.`
+          : "Demasiados intentos. Espera un momento.",
       );
       return;
     }
@@ -89,7 +93,9 @@ export function handleMutationError(error: unknown, opciones: OpcionesManejo = {
     default:
       toast.error(MENSAJE_SISTEMA, {
         description: conTraza(error),
-        action: opciones.reintentar ? { label: "Reintentar", onClick: opciones.reintentar } : undefined,
+        action: opciones.reintentar
+          ? { label: "Reintentar", onClick: opciones.reintentar }
+          : undefined,
       });
   }
 }

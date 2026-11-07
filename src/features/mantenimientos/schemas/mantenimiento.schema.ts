@@ -18,7 +18,11 @@ export const paginaMantenimientosSchema = paginaSchema(mantenimientoSchema);
 export const NOTAS_MAXIMO = 500;
 
 export const mantenimientoFormSchema = z.object({
-  notas: z.string().trim().max(NOTAS_MAXIMO, `Las notas no pueden superar los ${NOTAS_MAXIMO} caracteres`).optional(),
+  notas: z
+    .string()
+    .trim()
+    .max(NOTAS_MAXIMO, `Las notas no pueden superar los ${NOTAS_MAXIMO} caracteres`)
+    .optional(),
 });
 
 export type MantenimientoFormValues = z.infer<typeof mantenimientoFormSchema>;

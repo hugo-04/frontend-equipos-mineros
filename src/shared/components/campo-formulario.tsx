@@ -30,9 +30,9 @@ export function CampoFormulario({
     <div className="space-y-1.5">
       <Label htmlFor={id}>{etiqueta}</Label>
       {children}
-      {ayuda && !error && <p className="text-xs text-muted-foreground">{ayuda}</p>}
+      {ayuda && !error && <p className="text-muted-foreground text-xs">{ayuda}</p>}
       {error && (
-        <p id={`${id}-error`} role="alert" className="text-sm font-medium text-destructive">
+        <p id={`${id}-error`} role="alert" className="text-destructive text-sm font-medium">
           {error}
         </p>
       )}

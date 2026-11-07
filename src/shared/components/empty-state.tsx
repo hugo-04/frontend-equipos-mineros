@@ -18,7 +18,7 @@ export function EmptyState({
     >
       {icono && <div className="text-muted-foreground">{icono}</div>}
       <p className="text-base font-semibold">{titulo}</p>
-      {descripcion && <p className="max-w-sm text-sm text-muted-foreground">{descripcion}</p>}
+      {descripcion && <p className="text-muted-foreground max-w-sm text-sm">{descripcion}</p>}
       {accion}
     </div>
   );

@@ -14,7 +14,10 @@ export function leerClaims(token: string): ClaimsJwt | null {
   const payload = partes[1];
   if (partes.length !== 3 || !payload) return null;
   try {
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(payload.length / 4) * 4, "=");
+    const base64 = payload
+      .replace(/-/g, "+")
+      .replace(/_/g, "/")
+      .padEnd(Math.ceil(payload.length / 4) * 4, "=");
     const binario = atob(base64);
     const bytes = Uint8Array.from(binario, (c) => c.charCodeAt(0));
     const datos: unknown = JSON.parse(new TextDecoder().decode(bytes));

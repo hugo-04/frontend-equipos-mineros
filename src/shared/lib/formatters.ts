@@ -1,4 +1,7 @@
-const numero = new Intl.NumberFormat("es-PE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const numero = new Intl.NumberFormat("es-PE", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 const fechaHora = new Intl.DateTimeFormat("es-PE", {
   dateStyle: "medium",
   timeStyle: "short",

@@ -5,7 +5,8 @@ export function backendUrl(): string {
   const valor = process.env.BACKEND_URL?.trim();
   if (!valor) throw new Error("Falta la variable de entorno BACKEND_URL");
   const url = new URL(valor);
-  if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("BACKEND_URL debe ser http(s)");
+  if (url.protocol !== "https:" && url.protocol !== "http:")
+    throw new Error("BACKEND_URL debe ser http(s)");
   return url.origin + url.pathname.replace(/\/+$/, "");
 }
 

@@ -27,7 +27,11 @@ function validarCuerpo(cuerpo: EquipoRequest): EquipoRequest {
 }
 
 export function crearEquipo(cuerpo: EquipoRequest): Promise<Equipo> {
-  return peticion("/equipos", { metodo: "POST", cuerpo: validarCuerpo(cuerpo), esquema: equipoSchema });
+  return peticion("/equipos", {
+    metodo: "POST",
+    cuerpo: validarCuerpo(cuerpo),
+    esquema: equipoSchema,
+  });
 }
 
 export function actualizarEquipo(id: number, cuerpo: EquipoRequest): Promise<Equipo> {

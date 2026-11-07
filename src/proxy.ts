@@ -9,7 +9,12 @@ import { construirCsp } from "@/shared/server/security-headers";
  * Primera defensa de las rutas protegidas (la segunda es la validación en el layout (protected)) y
  * generador de la CSP con nonce por petición.
  */
-const RUTAS_PUBLICAS = new Set(["/login", "/api/health", "/api/auth/login", "/api/auth/sesion-invalida"]);
+const RUTAS_PUBLICAS = new Set([
+  "/login",
+  "/api/health",
+  "/api/auth/login",
+  "/api/auth/sesion-invalida",
+]);
 
 function conSeguridad(respuesta: NextResponse, csp: string, esApi: boolean): NextResponse {
   respuesta.headers.set("Content-Security-Policy", csp);
@@ -31,7 +36,13 @@ export function proxy(request: NextRequest): NextResponse {
   if (!RUTAS_PUBLICAS.has(pathname) && !autenticado) {
     if (esApi) {
       const sinSesion = NextResponse.json(
-        { status: 401, code: "NO_AUTENTICADO", message: "Sesión no válida", path: pathname, details: [] },
+        {
+          status: 401,
+          code: "NO_AUTENTICADO",
+          message: "Sesión no válida",
+          path: pathname,
+          details: [],
+        },
         { status: 401 },
       );
       return conSeguridad(sinSesion, csp, true);
@@ -49,5 +60,7 @@ export function proxy(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };

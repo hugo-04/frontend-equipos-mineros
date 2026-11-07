@@ -8,7 +8,14 @@ import { ErrorPanel } from "@/shared/components/error-panel";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/shared/components/ui/table";
 import { formatearFecha, formatearHorometro } from "@/shared/lib/formatters";
 import { useMantenimientos } from "../hooks/use-mantenimientos";
 
@@ -53,29 +60,50 @@ export function HistorialMantenimientos({ equipoId }: { equipoId: number }) {
                     <motion.tr
                       key={m.id}
                       initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0, transition: { duration: 0.2, delay: Math.min(i * 0.03, 0.25) } }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        transition: { duration: 0.2, delay: Math.min(i * 0.03, 0.25) },
+                      }}
                       exit={{ opacity: 0 }}
                       className="border-b"
                     >
                       <TableCell className="whitespace-nowrap">{formatearFecha(m.fecha)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatearHorometro(m.horometroAlRegistrar)}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatearHorometro(m.horometroAlRegistrar)}
+                      </TableCell>
                       {/* Las notas vienen del usuario: se muestran siempre como texto */}
-                      <TableCell className="max-w-xs break-words text-muted-foreground">{m.notas ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground max-w-xs break-words">
+                        {m.notas ?? "—"}
+                      </TableCell>
                     </motion.tr>
                   ))}
                 </AnimatePresence>
               </TableBody>
             </Table>
             {historial.data.totalPages > 1 && (
-              <nav aria-label="Paginación del historial" className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
+              <nav
+                aria-label="Paginación del historial"
+                className="flex items-center justify-between"
+              >
+                <p className="text-muted-foreground text-sm">
                   Página {historial.data.page} de {historial.data.totalPages}
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled={historial.data.first} onClick={() => setPagina((p) => p - 1)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={historial.data.first}
+                    onClick={() => setPagina((p) => p - 1)}
+                  >
                     Anterior
                   </Button>
-                  <Button variant="outline" size="sm" disabled={historial.data.last} onClick={() => setPagina((p) => p + 1)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={historial.data.last}
+                    onClick={() => setPagina((p) => p + 1)}
+                  >
                     Siguiente
                   </Button>
                 </div>
