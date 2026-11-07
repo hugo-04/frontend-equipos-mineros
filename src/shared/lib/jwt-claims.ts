@@ -1,7 +1,7 @@
 /**
- * Lectura SIN verificar de los claims de un JWT. Solo sirve para decidir la expiración de la cookie y para
- * mostrar el usuario/rol; la validez real la decide siempre el backend (nunca se confía en esto para autorizar).
- * Funciona en el runtime Edge (usa atob).
+ * Lee los datos de un JWT sin verificar la firma. Solo sirve para saber cuándo vence (y darle esa duración a la
+ * cookie) y para mostrar usuario y rol. Quien decide de verdad si el token vale es el backend: esto nunca se usa
+ * para autorizar. Usa atob, así que también corre en el runtime Edge.
  */
 export interface ClaimsJwt {
   sub?: string;
@@ -33,7 +33,7 @@ export function leerClaims(token: string): ClaimsJwt | null {
   }
 }
 
-/** Un token ilegible o vencido (con 5 s de margen) se considera inexistente */
+/** Un token ilegible o vencido (con 5 segundos de margen) se trata como si no existiera. */
 export function tokenVigente(token: string | undefined, ahoraMs: number = Date.now()): boolean {
   if (!token) return false;
   const claims = leerClaims(token);

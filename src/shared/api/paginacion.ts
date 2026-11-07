@@ -4,8 +4,9 @@ const TAMANO_MAXIMO = 100;
 const PAGINAS_MAXIMAS = 50; // tope de seguridad: 5000 registros
 
 /**
- * El backend pagina (máx. 100 por página; la primera página es la 0). Para las pantallas que filtran en el cliente se piden todas las
- * páginas; el tope evita un bucle si el servidor respondiera algo incoherente.
+ * Pide todas las páginas del backend (máximo 100 por página, la primera es la 0) y las junta. Se hace así porque
+ * la búsqueda y los filtros de equipos se aplican en el cliente. El tope de páginas evita un bucle si el servidor
+ * responde algo incoherente.
  */
 export async function obtenerTodasLasPaginas<T>(
   cargar: (page: number, size: number) => Promise<Pagina<T>>,

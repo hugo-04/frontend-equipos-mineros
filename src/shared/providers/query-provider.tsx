@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { ApiError, ErrorDeRed } from "@/shared/api/api-error";
 import { registrarManejador401 } from "@/shared/api/http";
 
-/** Solo se reintenta ante red caída o 5xx (y máximo 2 veces); un 4xx nunca se reintenta. */
+/** Se reintenta solo si se cayó la red o el servidor falló (5xx), máximo 2 veces. Un 4xx nunca: repetirlo no lo arregla. */
 export function debeReintentar(intento: number, error: unknown): boolean {
   if (intento >= 2) return false;
   if (error instanceof ErrorDeRed) return true;
@@ -28,6 +28,7 @@ function crearCliente(): QueryClient {
   });
 }
 
+/** Arma el QueryClient y registra qué hacer cuando cualquier consulta recibe un 401. */
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [cliente] = useState(crearCliente);
 
@@ -39,7 +40,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       cliente.clear();
       toast.warning("Tu sesión expiró");
       const destino = `/api/auth/sesion-invalida?from=${encodeURIComponent(window.location.pathname)}`;
-      // Navegación completa a una ruta de API (borra la cookie y redirige): no es una página de Next
+      // Navegación completa a una ruta de la API (borra la cookie y redirige al login), por eso no se usa el router de Next
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.setTimeout(() => window.location.assign(destino), 600);
     });
@@ -48,7 +49,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={cliente}>
-      {/* Respeta prefers-reduced-motion en todas las animaciones de Motion */}
+      {/* Si el usuario pidió menos movimiento en su sistema, Motion apaga las animaciones */}
       <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </QueryClientProvider>
   );

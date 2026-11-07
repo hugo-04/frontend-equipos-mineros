@@ -1,7 +1,7 @@
 import { z, type ZodType } from "zod";
 import type { Pagina } from "@/shared/types";
 
-/** Esquema de la respuesta paginada del backend: `{page,size,totalElements,totalPages,first,last,content}` */
+/** Esquema de la página que devuelve el backend: page, size, totalElements, totalPages, first, last y content. */
 export function paginaSchema<T>(item: ZodType<T>): ZodType<Pagina<T>> {
   return z.object({
     page: z.number().int(),

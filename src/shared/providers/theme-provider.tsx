@@ -18,7 +18,7 @@ export function ThemeProvider({ children, nonce }: { children: React.ReactNode; 
   );
 }
 
-/** Se monta una sola vez en el layout raíz; su tema sigue al modo claro/oscuro */
+/** Se monta una sola vez, en el layout raíz. Los toasts siguen el modo claro u oscuro. */
 export function Notificaciones() {
   const { resolvedTheme } = useTheme();
   return (

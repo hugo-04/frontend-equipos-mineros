@@ -1,6 +1,7 @@
 /**
- * A01/A05: lista blanca de rutas que el proxy reenvía al backend. Todo lo demás se rechaza.
- * Normaliza el path y rechaza `..`, `//`, `\`, `%` (codificados sospechosos), esquemas y hosts del usuario (SSRF).
+ * La lista blanca de rutas que el proxy deja pasar al backend; lo que no esté acá se rechaza. Además se revisa cada
+ * tramo del path y se rechazan `..`, `//`, `\`, `%`, esquemas y hosts que mande el usuario, para que nadie use el
+ * proxy para llegar a otra ruta o a otro servidor (path traversal y SSRF).
  */
 type Metodo = "GET" | "POST" | "PUT" | "DELETE";
 
@@ -20,7 +21,7 @@ export type ResultadoPolitica =
 
 export const METODOS_ESCRITURA = new Set(["POST", "PUT", "DELETE", "PATCH"]);
 
-/** Solo `page` y `size`, numéricos y acotados; cualquier otro parámetro se descarta. */
+/** De la query solo pasan page y size, y solo si son números cortos. Todo lo demás se descarta. */
 export function sanearQuery(params: URLSearchParams): string {
   const salida = new URLSearchParams();
   for (const clave of ["page", "size"] as const) {

@@ -2,8 +2,8 @@ import type { ZodType } from "zod";
 import { ApiError, ErrorDeRed, RespuestaInvalidaError, apiErrorDesdeRespuesta } from "./api-error";
 
 /**
- * Cliente HTTP base. El navegador SOLO habla con rutas /api/* del mismo origen (BFF); el token vive en una
- * cookie httpOnly que el servidor de Next adjunta al reenviar al backend. Nada de esto toca localStorage.
+ * Cliente HTTP base. El navegador solo habla con rutas /api/* de este mismo sitio. El token va en una cookie
+ * httpOnly que el servidor de Next adjunta cuando reenvía al backend, así que acá nunca se ve ni se guarda.
  */
 const BASE_PROXY = "/api/proxy";
 const TIMEOUT_MS = 15_000;
@@ -11,7 +11,7 @@ const TIMEOUT_MS = 15_000;
 type Handler401 = () => void;
 let manejador401: Handler401 | null = null;
 
-/** Lo registra el QueryProvider: limpia el caché, avisa y manda al login (una sola vez). */
+/** Lo registra el QueryProvider: ante un 401 limpia el caché, avisa y manda al login, una sola vez. */
 export function registrarManejador401(handler: Handler401 | null): void {
   manejador401 = handler;
 }
@@ -19,10 +19,10 @@ export function registrarManejador401(handler: Handler401 | null): void {
 interface OpcionesPeticion<T> {
   metodo?: "GET" | "POST" | "PUT" | "DELETE";
   cuerpo?: unknown;
-  /** Esquema Zod de la respuesta: lo que no cumpla el contrato se trata como error del sistema */
+  /** Esquema Zod de la respuesta. Si lo que llega no lo cumple, se trata como error de sistema. */
   esquema?: ZodType<T>;
   signal?: AbortSignal;
-  /** Para las rutas propias (/api/auth/*) que no pasan por el proxy */
+  /** Para las rutas propias (/api/auth/*), que no pasan por el proxy. */
   rutaPropia?: boolean;
 }
 
@@ -71,7 +71,7 @@ export async function peticion<T = void>(
       json,
       respuesta.headers.get("Retry-After"),
     );
-    // Las rutas /api/auth/login responden 401 por credenciales malas: eso no es "sesión vencida"
+    // El login responde 401 cuando las credenciales están mal; eso no quiere decir que la sesión venció
     if (respuesta.status === 401 && !rutaPropia) manejador401?.();
     throw error;
   }

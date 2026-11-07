@@ -15,14 +15,14 @@ export interface ConfirmDialogProps {
   abierto: boolean;
   alCambiar: (abierto: boolean) => void;
   titulo: string;
-  /** Debe nombrar lo que se va a afectar (por ejemplo el código del equipo) */
+  /** Tiene que decir qué se va a afectar (por ejemplo, el código del equipo). */
   descripcion: React.ReactNode;
   textoConfirmar?: string;
   cargando?: boolean;
   alConfirmar: () => void;
 }
 
-/** Confirmación obligatoria para acciones destructivas. No se cierra sola mientras la operación está en curso. */
+/** Confirmación para acciones que no se pueden deshacer. No se deja cerrar mientras la operación sigue en curso. */
 export function ConfirmDialog({
   abierto,
   alCambiar,
@@ -45,7 +45,7 @@ export function ConfirmDialog({
               Cancelar
             </Button>
           </AlertDialogCancel>
-          {/* Button normal (no Action) para no cerrar el diálogo antes de que termine la mutación */}
+          {/* Es un Button normal y no el Action de Radix, porque ese cierra el diálogo antes de que termine la mutación */}
           <Button variant="destructive" cargando={cargando} onClick={alConfirmar}>
             {cargando ? "Eliminando…" : textoConfirmar}
           </Button>

@@ -5,7 +5,7 @@ import { ApiError, classifyError } from "@/shared/api/api-error";
 import { MENSAJE_SISTEMA } from "@/shared/api/error-handler";
 import { Button } from "@/shared/components/ui/button";
 
-/** Error de una consulta: mensaje amable, código de rastreo si el backend lo envió y botón para reintentar */
+/** Cuando falla una consulta: un mensaje amable, el código de rastreo si el backend lo mandó y un botón para reintentar. */
 export function ErrorPanel({ error, alReintentar }: { error: unknown; alReintentar?: () => void }) {
   const categoria = classifyError(error);
   const traceId = error instanceof ApiError ? error.traceId : undefined;

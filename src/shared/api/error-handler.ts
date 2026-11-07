@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import { ApiError, classifyError } from "./api-error";
 
-/** Mensaje genérico de sistema: nunca se muestran trazas ni detalles técnicos (A10). */
+/** Lo que ve el usuario cuando algo falla de nuestro lado. Nunca lleva trazas ni detalles técnicos. */
 export const MENSAJE_SISTEMA = "Algo salió mal de nuestro lado. Inténtalo de nuevo.";
 
 export interface DetalleCampo {
@@ -9,7 +9,7 @@ export interface DetalleCampo {
   mensaje: string;
 }
 
-/** Mapea `details[]` del backend a los campos del formulario; devuelve también lo que no tiene campo. */
+/** Reparte los `details[]` del backend: los que corresponden a un campo del formulario van junto al campo y el resto se devuelve aparte, para el toast. */
 export function mapearDetalles(
   error: ApiError,
   camposDelFormulario: readonly string[],
@@ -25,15 +25,15 @@ export function mapearDetalles(
 }
 
 export interface OpcionesManejo {
-  /** Campos que existen en el formulario (para mapear details[].field) */
+  /** Los campos que tiene el formulario, para saber a cuáles se les puede poner el error. */
   campos?: readonly string[];
-  /** Pone el error junto al campo (react-hook-form `setError`) */
+  /** Marca el error en el campo (es el setError de react-hook-form). */
   ponerErrorEnCampo?: (campo: string, mensaje: string) => void;
-  /** Campo a marcar en un 409 (por ejemplo "codigo" cuando el código ya existe) */
+  /** Qué campo marcar cuando hay un 409, por ejemplo "codigo" si el código ya existe. */
   campoConflicto?: string;
-  /** Acción “Reintentar” para errores de sistema o de red */
+  /** Si se pasa, el toast de error trae un botón "Reintentar". */
   reintentar?: () => void;
-  /** Se invoca en un 404 para refrescar la lista */
+  /** Qué hacer ante un 404; normalmente refrescar la lista, porque el registro ya no está. */
   alNoEncontrado?: () => void;
 }
 
@@ -44,7 +44,8 @@ function conTraza(error: unknown): string | undefined {
 }
 
 /**
- * Único lugar que traduce errores del API a notificaciones. Lo usan los `onError` de todas las mutaciones.
+ * El único lugar donde un error del API se convierte en un aviso para el usuario. Lo usan los onError de todas
+ * las mutaciones, así no hay try/catch ni toasts sueltos repartidos por los componentes.
  */
 export function handleMutationError(error: unknown, opciones: OpcionesManejo = {}): void {
   const categoria = classifyError(error);
@@ -74,7 +75,7 @@ export function handleMutationError(error: unknown, opciones: OpcionesManejo = {
       opciones.alNoEncontrado?.();
       return;
     case "unauthorized":
-      // El cliente HTTP ya limpió el caché y redirige al login; aquí no se duplica el aviso
+      // El cliente HTTP ya limpió el caché y está mandando al login; acá no se vuelve a avisar
       return;
     case "forbidden":
       toast.error("No tienes permiso para esta acción");

@@ -1,4 +1,4 @@
-/** Cabeceras de seguridad (A02). La CSP lleva nonce por petición: sin unsafe-inline ni unsafe-eval en scripts. */
+/** Cabeceras de seguridad. La CSP lleva un nonce distinto en cada petición, así los scripts no necesitan unsafe-inline ni unsafe-eval. */
 export function construirCsp(
   nonce: string,
   produccion: boolean,
@@ -6,9 +6,9 @@ export function construirCsp(
 ): string {
   const directivas = [
     "default-src 'self'",
-    // En desarrollo Next necesita eval (React Refresh); en producción nunca
+    // En desarrollo Next necesita eval (por React Refresh); en producción nunca
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${produccion ? "" : " 'unsafe-eval'"}`,
-    // Sonner, Motion y Next inyectan estilos en línea: es el único compromiso de la CSP (documentado en el README)
+    // Sonner, Motion y Next meten estilos en línea, por eso style-src conserva unsafe-inline. Es el único compromiso de la CSP (está en el README)
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
@@ -17,7 +17,7 @@ export function construirCsp(
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    // Solo cuando la página se sirve por HTTPS: en http://localhost forzaría https y rompería el modo local
+    // Solo si la página se sirve por HTTPS: en http://localhost forzaría https y rompería el modo local
     ...(https ? ["upgrade-insecure-requests"] : []),
   ];
   return directivas.join("; ");

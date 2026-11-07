@@ -9,7 +9,7 @@ export interface RespuestaBackend {
   traceId: string | null;
 }
 
-/** Llamada al backend con timeout (AbortController). Una caída o un timeout lanza: quien llama falla cerrado. */
+/** Llama al backend con un timeout. Si el backend se cae o tarda de más, lanza error y quien llama falla cerrado. */
 export async function llamarBackend(
   ruta: string,
   init: { metodo: string; token?: string; cuerpo?: string },

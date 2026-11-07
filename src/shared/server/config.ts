@@ -1,6 +1,6 @@
 import "server-only";
 
-/** BACKEND_URL es una variable SOLO de servidor (sin NEXT_PUBLIC_): el navegador nunca la conoce. */
+/** BACKEND_URL solo existe en el servidor (no lleva NEXT_PUBLIC_), así que el navegador nunca ve la URL del backend. */
 export function backendUrl(): string {
   const valor = process.env.BACKEND_URL?.trim();
   if (!valor) throw new Error("Falta la variable de entorno BACKEND_URL");

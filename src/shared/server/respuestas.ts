@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
-/** Toda respuesta autenticada o del proxy lleva Cache-Control: no-store (no se cachean datos privados). */
+/** Toda respuesta autenticada o del proxy lleva Cache-Control: no-store, para que nadie cachee datos privados. */
 export const CABECERAS_NO_STORE = { "Cache-Control": "no-store" } as const;
 
-/** Error con la misma forma que el ErrorResponse del backend, generado por el propio servidor de Next */
+/** Un error con la misma forma que el ErrorResponse del backend, pero generado por el propio servidor de Next. */
 export function errorJson(
   status: number,
   code: string,

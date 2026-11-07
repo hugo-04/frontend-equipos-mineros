@@ -5,8 +5,9 @@ import { llamarBackend } from "./backend";
 import { leerToken } from "./session";
 
 /**
- * Segunda defensa (la primera es proxy.ts): valida la sesión CONTRA EL BACKEND en cada render protegido.
- * Falla cerrado: si no hay cookie vigente, el backend rechaza el token o no responde, se trata como no autenticado.
+ * Segunda defensa de las rutas protegidas (la primera es proxy.ts): comprueba la sesión contra el backend en cada
+ * render. Falla cerrado: si no hay cookie vigente, si el backend rechaza el token o si no responde, se trata como
+ * no autenticado y se manda al login.
  */
 export async function exigirSesion(rutaActual: string): Promise<void> {
   const token = await leerToken();

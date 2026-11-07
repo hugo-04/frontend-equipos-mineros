@@ -1,6 +1,6 @@
 import "server-only";
 
-/** A09: registro de eventos de seguridad en el servidor, sin credenciales ni tokens. */
+/** Deja en el log del servidor los eventos de seguridad (login fallido, 401, 403, 5xx). Nunca credenciales ni tokens. */
 type Nivel = "info" | "warn" | "error";
 
 const limpiar = (v: string) => v.replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 200);

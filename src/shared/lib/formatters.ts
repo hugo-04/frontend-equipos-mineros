@@ -12,6 +12,7 @@ export function formatearHorometro(valor: number): string {
   return `${numero.format(valor)} h`;
 }
 
+// Las fechas del backend vienen en UTC y se muestran en UTC, para que no cambien según la zona de quien las mira
 export function formatearFecha(iso: string): string {
   const fecha = new Date(iso);
   return Number.isNaN(fecha.getTime()) ? "—" : `${fechaHora.format(fecha)} UTC`;

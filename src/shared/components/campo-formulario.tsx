@@ -2,8 +2,8 @@ import * as React from "react";
 import { Label } from "@/shared/components/ui/label";
 
 /**
- * Etiqueta + control + mensaje de error accesible. El control debe recibir `id`, `aria-invalid` y
- * `aria-describedby` con los valores que entrega `propsAccesibles`.
+ * Etiqueta, control y mensaje de error accesible. El control tiene que recibir el id, el aria-invalid y el
+ * aria-describedby que devuelve propsAccesibles, para que el lector de pantalla lea el error junto al campo.
  */
 export function propsAccesibles(id: string, error?: string) {
   return {

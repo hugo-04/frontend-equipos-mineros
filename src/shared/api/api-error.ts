@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { ApiErrorDetail } from "@/shared/types";
 
-/** Forma del ErrorResponse del backend. `traceId` y `details` son opcionales (compatibilidad hacia atrás). */
+/** Cómo viene el error del backend. traceId y details son opcionales, así el frontend no se rompe si algún día faltan. */
 export const errorResponseSchema = z.object({
   timestamp: z.string().optional(),
   status: z.number(),
@@ -14,7 +14,7 @@ export const errorResponseSchema = z.object({
     .array(
       z.object({
         field: z.string(),
-        // El contrato actual usa `reason`; se tolera `message` por si el backend lo renombra
+        // Hoy el backend manda "reason"; acepto también "message" por si lo renombran
         reason: z.string().optional(),
         message: z.string().optional(),
       }),
@@ -32,6 +32,7 @@ export type CategoriaError =
   | "system"
   | "network";
 
+/** Un error del backend ya interpretado: estado, código, mensaje, detalles por campo y traceId. */
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
@@ -57,7 +58,7 @@ export class ApiError extends Error {
   }
 }
 
-/** Convierte el cuerpo de error del backend en un ApiError; si no se reconoce, es un error de sistema. */
+/** Arma un ApiError con el cuerpo de error del backend. Si el cuerpo no se reconoce, queda como error de sistema. */
 export function apiErrorDesdeRespuesta(
   status: number,
   cuerpo: unknown,
@@ -87,7 +88,7 @@ export function apiErrorDesdeRespuesta(
   });
 }
 
-/** La respuesta no cumple el contrato (falla la validación con Zod) o no llegó: se trata como error de sistema. */
+/** La respuesta llegó pero no cumple el contrato (falló el Zod). Para el usuario es un error de sistema. */
 export class RespuestaInvalidaError extends ApiError {
   constructor() {
     super({
@@ -99,6 +100,7 @@ export class RespuestaInvalidaError extends ApiError {
   }
 }
 
+/** Ni siquiera se pudo llegar al servidor: red caída o timeout. */
 export class ErrorDeRed extends Error {
   constructor() {
     super("No se pudo conectar con el servidor");
@@ -106,6 +108,7 @@ export class ErrorDeRed extends Error {
   }
 }
 
+/** Mete cualquier error en una categoría, para decidir qué se le muestra al usuario. */
 export function classifyError(error: unknown): CategoriaError {
   if (error instanceof ApiError) {
     switch (error.status) {

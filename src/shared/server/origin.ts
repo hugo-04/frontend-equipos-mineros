@@ -1,6 +1,6 @@
 /**
- * A07 (CSRF): en toda escritura el header Origin debe coincidir con el host de la app.
- * Se acepta el host reenviado por el proxy del hosting (x-forwarded-host) porque es quien termina el TLS.
+ * Protección contra CSRF: en cualquier escritura (POST, PUT, DELETE) el header Origin tiene que ser el host de esta
+ * app. También vale el host que reenvía el proxy del hosting (x-forwarded-host), que es el que pone el HTTPS.
  */
 export function origenPermitido(headers: Headers, urlPeticion: string): boolean {
   const origen = headers.get("origin");
