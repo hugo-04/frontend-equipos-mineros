@@ -1,0 +1,117 @@
+name: CI
+
+# Se ejecuta en cada push y en cada pull request.
+# Las acciones están fijadas por SHA de commit (el comentario dice la versión); Dependabot las mantiene al día.
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Permisos mínimos por defecto; los jobs que necesitan más lo piden explícitamente
+permissions:
+  contents: read
+
+jobs:
+  calidad:
+    name: Lint, tipos, pruebas, build y npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # La versión de Node sale de .nvmrc (la misma que usa el desarrollo y el proyecto de Vercel)
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Instalación reproducible a partir del lockfile
+      - run: npm ci
+
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+
+      - name: Build
+        run: npm run build
+        env:
+          BACKEND_URL: http://localhost:8080
+
+      # A03: falla si hay vulnerabilidades altas o críticas en las dependencias
+      - name: npm audit
+        run: npm audit --audit-level=high
+
+  secretos:
+    name: Escaneo de secretos (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # Para repositorios de una organización gitleaks pide la licencia en el secret GITLEAKS_LICENSE
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # En repositorios privados requiere GitHub Advanced Security; si no lo tienes, desactívalo creando la
+  # variable del repositorio CODEQL_HABILITADO=false.
+  codeql:
+    name: CodeQL
+    if: ${{ vars.CODEQL_HABILITADO != 'false' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Iniciar CodeQL
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: javascript-typescript
+          build-mode: none
+
+      - name: Analizar
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+
+  # A03/A05: escaneo dinámico (OWASP ZAP baseline) contra la app levantada con un backend simulado de pruebas.
+  # Los hallazgos de nivel alto hacen fallar el job; los avisos aceptados (con motivo) están en .zap/rules.tsv.
+  zap:
+    name: OWASP ZAP baseline
+    runs-on: ubuntu-latest
+    needs: calidad
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Backend simulado
+        run: node scripts/backend-simulado.mjs &
+        env:
+          PUERTO: "8080"
+
+      - name: Construir y levantar el frontend
+        run: |
+          npm run build
+          npm run start &
+          for i in $(seq 1 30); do curl -fs http://localhost:3000/api/health && break; sleep 2; done
+        env:
+          BACKEND_URL: http://localhost:8080
+
+      - name: ZAP baseline
+        uses: zaproxy/action-baseline@6c5a007541891231cd9e0ddec25d4f25c59c9874 # v0.15.0
+        with:
+          target: http://localhost:3000/login
+          rules_file_name: .zap/rules.tsv
+          allow_issue_writing: false
+          fail_action: true
