@@ -3,6 +3,7 @@ import { CABECERAS_ESTATICAS } from "./src/shared/server/security-headers";
 
 const config: NextConfig = {
   reactStrictMode: true,
+  output: "standalone", // genera un server.js autosuficiente para la imagen de Docker
   poweredByHeader: false, // no avisar que esto corre con Next.js
   productionBrowserSourceMaps: false, // no publicar el código fuente en producción
   async headers() {

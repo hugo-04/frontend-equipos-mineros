@@ -12,6 +12,7 @@ vi.mock("@/shared/server/logger", () => ({ registrar: vi.fn() }));
 import { proxy } from "@/proxy";
 import { limitadorLogin } from "@/shared/server/rate-limit";
 import { GET as sesionInvalida } from "./auth/sesion-invalida/route";
+import { GET as health } from "./health/route";
 import { POST as login } from "./auth/login/route";
 import { POST as logout } from "./auth/logout/route";
 import { DELETE as proxyDelete, GET as proxyGet, POST as proxyPost } from "./proxy/[...path]/route";
@@ -434,5 +435,24 @@ describe("proxy.ts (rutas protegidas y CSP)", () => {
     const n = () =>
       /nonce-([^']+)'/.exec(proxy(req("/login")).headers.get("content-security-policy") ?? "")?.[1];
     expect(n()).not.toBe(n());
+  });
+});
+
+// El health sirve para que deploy-frontend.sh confirme qué versión quedó corriendo
+describe("GET /api/health", () => {
+  it("responde UP con la versión de la imagen (APP_VERSION) y sin cachear", async () => {
+    vi.stubEnv("APP_VERSION", "abc1234");
+    const r = health();
+    expect(r.status).toBe(200);
+    expect(await r.json()).toEqual({ status: "UP", version: "abc1234" });
+    expect(r.headers.get("cache-control")).toBe("no-store");
+    vi.unstubAllEnvs();
+  });
+
+  it("sin APP_VERSION dice que es una versión de desarrollo", async () => {
+    vi.stubEnv("APP_VERSION", "");
+    delete process.env.APP_VERSION;
+    expect((await health().json()).version).toBe("dev");
+    vi.unstubAllEnvs();
   });
 });
