@@ -19,6 +19,7 @@ import {
 import { formatearFecha, formatearHorometro } from "@/shared/lib/formatters";
 import { useMantenimientos } from "../hooks/use-mantenimientos";
 
+/** El historial de mantenimientos de un equipo, paginado por el backend. */
 export function HistorialMantenimientos({ equipoId }: { equipoId: number }) {
   const [pagina, setPagina] = useState(0);
   const historial = useMantenimientos(equipoId, pagina);
@@ -72,7 +73,7 @@ export function HistorialMantenimientos({ equipoId }: { equipoId: number }) {
                       <TableCell className="text-right tabular-nums">
                         {formatearHorometro(m.horometroAlRegistrar)}
                       </TableCell>
-                      {/* Las notas vienen del usuario: se muestran siempre como texto */}
+                      {/* Las notas las escribe el usuario: se muestran siempre como texto, nunca como HTML */}
                       <TableCell className="text-muted-foreground max-w-xs break-words">
                         {m.notas ?? "—"}
                       </TableCell>

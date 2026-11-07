@@ -22,6 +22,7 @@ import {
   type MantenimientoFormValues,
 } from "../schemas/mantenimiento.schema";
 
+/** Botón y diálogo para registrar un mantenimiento, con notas opcionales. Al registrarlo, el ciclo del equipo vuelve a empezar. */
 export function RegistrarMantenimientoDialog({
   equipoId,
   codigo,

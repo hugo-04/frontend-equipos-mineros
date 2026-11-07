@@ -6,7 +6,7 @@ export const mantenimientoSchema = z.object({
   equipoId: z.number().int().positive(),
   fecha: z.string(),
   horometroAlRegistrar: z.number(),
-  // El backend omite `notas` cuando no hay; null se tolera y se normaliza a undefined
+  // El backend no manda "notas" cuando no hay; si llegara null también se acepta y se deja como undefined
   notas: z
     .string()
     .nullish()
@@ -17,6 +17,7 @@ export const paginaMantenimientosSchema = paginaSchema(mantenimientoSchema);
 
 export const NOTAS_MAXIMO = 500;
 
+/** Las notas son opcionales y pueden tener hasta 500 caracteres, igual que en el contrato. */
 export const mantenimientoFormSchema = z.object({
   notas: z
     .string()

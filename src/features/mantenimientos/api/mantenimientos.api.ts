@@ -8,6 +8,7 @@ import {
 } from "../schemas/mantenimiento.schema";
 import type { Mantenimiento } from "../types";
 
+/** Una página del historial de un equipo (la pagina el backend). */
 export function listarMantenimientos(
   equipoId: number,
   page: number,
@@ -21,6 +22,7 @@ export function listarMantenimientos(
   });
 }
 
+/** Registra un mantenimiento. Las notas son opcionales y se validan (máximo 500) antes de enviar. */
 export function registrarMantenimiento(equipoId: number, notas?: string): Promise<Mantenimiento> {
   const id = idSchema.parse(equipoId);
   const cuerpo = mantenimientoFormSchema.parse({ notas });
