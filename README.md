@@ -135,7 +135,6 @@ por petición) y las cabeceras de seguridad.
 | **A10 Condiciones excepcionales** | `error.tsx`, `not-found.tsx`, `global-error.tsx`; **falla cerrado** (si no se puede validar la sesión, es no autenticado); `AbortController` con timeout en toda llamada al backend; nunca se muestran errores crudos; red caída y respuestas inválidas con manejo explícito                                          |
 
 Las respuestas autenticadas y del proxy llevan `Cache-Control: no-store`, y las llamadas del servidor usan `cache: 'no-store'`.
-La revisión del backend (A01–A10, hallazgos y correcciones) está en [`../BACKEND/docs/revision-seguridad-backend.md`](../BACKEND/docs/revision-seguridad-backend.md).
 
 ## CI/CD
 
