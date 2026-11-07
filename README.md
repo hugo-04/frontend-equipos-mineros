@@ -112,7 +112,7 @@ El contrato del backend entrega `details[].reason` (el prompt decía `message`):
 npm run lint && npm run typecheck && npm run test && npm run build
 ```
 
-**164 pruebas** (Vitest + Testing Library): esquemas Zod (casos válidos e inválidos), `classifyError` y mapeo de `details`, componentes
+**167 pruebas** (Vitest + Testing Library): esquemas Zod (casos válidos e inválidos), `classifyError` y mapeo de `details`, componentes
 (formulario de equipo con errores accesibles, 409 en el campo, error de sistema sin detalles, badge de estado, diálogo de confirmación)
 y la **seguridad**: `from` del login (`//evil.com`, `https://…`, `/\evil`, `%0d%0a`), lista blanca del proxy (`..`, `%2e%2e`, esquemas y hosts externos,
 rutas fuera de la lista), que el token **jamás** salga en el cuerpo del login ni del proxy, que se borre la cookie en 401, que se rechacen
@@ -130,7 +130,7 @@ por petición) y las cabeceras de seguridad.
 | **A05 Inyección y XSS**           | Sin `dangerouslySetInnerHTML` ni `eval` (reglas de ESLint en error); notas y códigos se renderizan como texto; `encodeURIComponent` en las URLs; Zod en entrada y salida; la CSP como segunda barrera                                                                                                                 |
 | **A06 Diseño inseguro**           | Confirmación en acciones destructivas; **límite de intentos de login por IP en el route handler** (además del 429 del backend); límite de tamaño y timeout en el proxy; las reglas críticas las valida también el backend                                                                                             |
 | **A07 Fallas de autenticación**   | Cookie `httpOnly` + `Secure` + `SameSite=Lax` con expiración acorde al token; mensaje de login genérico; logout que borra la cookie y limpia el caché; **CSRF**: `SameSite` + verificación de `Origin` en toda escritura; sesión vencida → login                                                                      |
-| **A08 Integridad**                | Respuestas validadas con Zod antes de usarse; sin carga dinámica de código de terceros; build reproducible con lockfile; despliegue solo con `scripts/deploy-frontend.sh` tras CI en verde                                                                                                                            |
+| **A08 Integridad**                | Respuestas validadas con Zod antes de usarse; sin carga dinámica de código de terceros; build reproducible con lockfile; despliegue con `scripts/deploy-frontend.sh`, que corre las pruebas antes de publicar y verifica la versión desplegada                                                                        |
 | **A09 Registro y alertas**        | Los route handlers registran en el servidor los fallos de login, 401/403 y 5xx **sin credenciales ni tokens** (`[seguridad] …`); el `traceId` del backend se muestra al usuario en los errores del sistema                                                                                                            |
 | **A10 Condiciones excepcionales** | `error.tsx`, `not-found.tsx`, `global-error.tsx`; **falla cerrado** (si no se puede validar la sesión, es no autenticado); `AbortController` con timeout en toda llamada al backend; nunca se muestran errores crudos; red caída y respuestas inválidas con manejo explícito                                          |
 
@@ -143,32 +143,38 @@ La revisión del backend (A01–A10, hallazgos y correcciones) está en [`../BAC
 (en repos privados necesita GitHub Advanced Security; se apaga con la variable `CODEQL_HABILITADO=false`); y **OWASP ZAP baseline** contra la app levantada con el
 backend simulado (`scripts/backend-simulado.mjs`; avisos aceptados, con motivo, en [`.zap/rules.tsv`](.zap/rules.tsv)). Acciones fijadas por SHA; Dependabot las mantiene.
 
-## Despliegue (Vercel)
+## Despliegue (Railway)
 
-1. En Vercel crea el proyecto, fija **Node.js** a la versión de `.nvmrc` y define `BACKEND_URL` (entorno _production_) con la URL pública del backend.
-2. Exporta `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` y `APP_URL` (URL pública del frontend).
-3. `./scripts/deploy-frontend.sh` (el `deploy.sh` del backend o la CI pueden invocarlo): verifica herramientas y variables, `npm ci` + lint/tipos/pruebas,
-   comprueba que `BACKEND_URL` exista en Vercel, construye, publica con el CLI y **verifica `APP_URL/api/health` y `APP_URL/login`**. Si la verificación falla, intenta
-   `vercel rollback` (código `2`; `3` si no pudo). Se puede ejecutar varias veces seguidas. `SIMULATE_FAILURE=health` demuestra el rollback.
+Backend, MySQL y frontend se despliegan en **Railway**. El frontend usa el mismo mecanismo que el `deploy.sh` del backend: se construye una
+imagen con el [`Dockerfile`](Dockerfile) (Node de `.nvmrc`, salida `standalone` de Next, usuario sin root), se publica en GHCR con el **SHA corto del commit** como tag y
+Railway la despliega. Desplegar y hacer rollback son la misma operación con otro tag.
 
-Códigos: `0` ok · `1` falta una herramienta o variable · `2` falló y se hizo rollback · `3` falló y el rollback no pudo · `4` falló la construcción o las pruebas.
+1. En Railway crea un servicio para el frontend y define su variable `BACKEND_URL` con la URL del backend (por ejemplo la interna de Railway). Es solo del servidor: se lee al arrancar, no al construir.
+2. Exporta `RAILWAY_TOKEN`, `RAILWAY_SERVICE`, `APP_URL` (URL pública del frontend) y `REGISTRY_IMAGE` (por ejemplo `ghcr.io/mi-org/equipos-mineros-frontend`). Hay que haber iniciado sesión en GHCR (`docker login ghcr.io`) y la imagen debe poder descargarla Railway (paquete público, como el del backend).
+3. `./scripts/deploy-frontend.sh`: verifica herramientas y variables, `npm ci` + lint/tipos/pruebas, construye y publica la imagen, anota la versión que corre ahora
+   (la lee de `APP_URL/api/health`), despliega en Railway y **verifica `/api/health` con reintentos y que responda la versión nueva**. Si falla el despliegue o la verificación, redesplega la versión anterior.
+   Se puede ejecutar varias veces seguidas: si esa versión ya está arriba y sana, no hace nada.
+
+Códigos de salida (los mismos que el backend): `0` salió bien · `1` falló antes de tocar producción · `2` falló y el rollback funcionó · `3` falló y no había versión anterior a la que volver · `4` falló el despliegue y el rollback también.
+`SIMULATE_FAILURE=health` hace fallar la verificación a propósito para demostrar el rollback, y `OMITIR_PRUEBAS=1` se salta lint, tipos y pruebas si el CI ya las corrió.
+Las pruebas del script, con Railway y las demás herramientas simuladas, están en [`scripts/test/deploy_frontend_test.sh`](scripts/test/deploy_frontend_test.sh) y corren en el CI.
 
 ## Versiones instaladas (verificadas con `npm view`)
 
 Next.js 16.4.5 · React / React DOM 19.3.1 · TypeScript 5.9.3 · Zod 4.6.7 · React Hook Form 7.91.0 · @hookform/resolvers 7.0.3 · TanStack Query 5.107.1 ·
 Sonner 2.0.8 · Tailwind CSS 4.3.5 · Motion 14.10.1 · lucide-react 1.70.0 · next-themes 0.4.6 · openapi-typescript 7.13.0 · Vitest 5.1.0 ·
-Testing Library React 16.3.3 · ESLint 9.39.5 · Prettier 3.9.10 · Vercel CLI 65.12.1 (fijada en el script).
+Testing Library React 16.3.3 · ESLint 9.39.5 · Prettier 3.9.10.
 
 ## Decisiones y supuestos
 
 - **TypeScript 5.9.3, no 7.x.** `openapi-typescript` 7.13 declara `peerDependencies: typescript ^5`, y se prefirió una combinación compatible a forzar el peer. Se pasará a 7 cuando el generador lo soporte.
-- **Node `>=24` (`.nvmrc` = 24).** Es la versión instalada y con la que se probó todo. La _Active LTS_ más reciente es la 26; no estaba disponible en este entorno y no se pudo validar el build con ella, así que se dejó la 24 (LTS, soportada). Al pasar a 26 basta cambiar `.nvmrc` (CI y Vercel lo leen de ahí) y `engines`.
+- **Node `>=24` (`.nvmrc` = 24).** Es la versión instalada y con la que se probó todo. La _Active LTS_ más reciente es la 26; no estaba disponible en este entorno y no se pudo validar el build con ella, así que se dejó la 24 (LTS, soportada). Al pasar a 26 basta cambiar `.nvmrc` (lo lee el CI), la imagen base del `Dockerfile` y `engines`.
 - **Next.js 16: `proxy.ts` en lugar de `middleware.ts`**, APIs asíncronas (`cookies()`, `headers()`, `params`, `searchParams`) y Turbopack por defecto.
 - **Componentes de UI escritos a mano al estilo shadcn/ui** (Radix + `class-variance-authority`, sin la CLI interactiva), con tokens de color como variables CSS (ámbar sobre pizarra/zinc, modo claro/oscuro, contraste AA).
 - **Los listados se piden completos al backend** (todas las páginas de hasta 100, con tope de 50) porque la búsqueda y los filtros de equipos son en el cliente, como pide el enunciado; la tabla pagina en el cliente (10 por página). El **historial de mantenimientos sí usa la paginación del backend**.
 - **`style-src` conserva `'unsafe-inline'`.** Sonner, Motion y Next inyectan estilos en línea; el riesgo es bajo y los scripts sí van con nonce y sin `unsafe-inline`. Está registrado como aviso aceptado en ZAP.
 - **La CSP con nonce vuelve dinámicas todas las páginas** (no hay generación estática): es el costo esperado de esa protección y aquí no hay contenido público que cachear.
-- **Límite de login del frontend en memoria** (por instancia, de mejor esfuerzo): en Vercel serverless cada instancia tiene su propio contador; el límite fuerte es el del backend (429).
+- **Límite de login del frontend en memoria** (por instancia, de mejor esfuerzo): si hubiera varias instancias en Railway, cada una tendría su propio contador; el límite fuerte es el del backend (429).
 - **Sesión validada contra el backend en cada render protegido** (`GET /tipos?page=1&size=1`): una llamada extra por navegación a cambio de detectar de inmediato un token revocado o un backend caído. Si no se puede validar, se trata como no autenticado.
 - **El ancla del rol:** el rol y el usuario que se muestran salen de los claims del JWT **sin verificar firma** (solo para la interfaz); la autorización real la decide siempre el backend (por ejemplo, `DELETE` solo para `ADMIN` → 403 → toast).
 - **`details[].reason`** (contrato real) en lugar de `details[].message` (prompt); se aceptan ambos.
@@ -176,7 +182,7 @@ Testing Library React 16.3.3 · ESLint 9.39.5 · Prettier 3.9.10 · Vercel CLI 6
 - **Paginación del backend desde 0** (`page=0` es la primera página, como Spring Data): el frontend la usa así y muestra "Página n+1".
 - **Cookie `__Host-` en producción:** exige `Secure`, así que en `http://localhost` con `next start` funciona en Chrome y Firefox (tratan `localhost` como seguro) pero no en Safari; en desarrollo (`npm run dev`) el nombre es `sesion` sin prefijo y funciona en todos.
 - **Verificado de punta a punta** contra el backend real (Docker + MySQL): login, redirecciones, listado, creación, duplicado (409) y validación (400) mapeados al formulario, mantenimiento, baja, logout, y en el navegador (login → formulario con validaciones → alta con toast), sin errores de consola, sin token en `localStorage`/`sessionStorage` y sin scripts en línea sin nonce.
-- **No ejecutado en este entorno:** ZAP, CodeQL y gitleaks (solo corren en GitHub), y el despliegue real en Vercel (requiere credenciales); `deploy-frontend.sh` se validó en sintaxis y en el caso de variables faltantes.
+- **No ejecutado en este entorno:** ZAP, CodeQL y gitleaks (solo corren en GitHub), y el despliegue real en Railway (requiere credenciales y el servicio creado). Sí se probó: la imagen construida y corriendo contra un backend simulado (health con versión, login, proxy, redirecciones, usuario sin root) y `deploy-frontend.sh` con las herramientas simuladas (15 casos: éxito, rollback, variables faltantes, idempotencia, etc.).
 
 ## Uso de IA
 
