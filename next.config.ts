@@ -3,10 +3,10 @@ import { CABECERAS_ESTATICAS } from "./src/shared/server/security-headers";
 
 const config: NextConfig = {
   reactStrictMode: true,
-  poweredByHeader: false, // A02: no anunciar la tecnología
-  productionBrowserSourceMaps: false, // A02: no publicar el código fuente
+  poweredByHeader: false, // no avisar que esto corre con Next.js
+  productionBrowserSourceMaps: false, // no publicar el código fuente en producción
   async headers() {
-    // La CSP con nonce se genera por petición en src/proxy.ts; aquí van las cabeceras estáticas
+    // La CSP con nonce se arma en cada petición en src/proxy.ts; acá van solo las cabeceras que no cambian
     return [
       {
         source: "/:path*",

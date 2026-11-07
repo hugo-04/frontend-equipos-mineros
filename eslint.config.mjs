@@ -22,7 +22,7 @@ export default defineConfig([
     },
   },
   {
-    // Los componentes y páginas nunca llaman a fetch: lo hace la capa api/
+    // Los componentes y las páginas no llaman a fetch: eso es trabajo de la capa api/
     files: ["src/**/components/**/*.{ts,tsx}", "src/app/**/page.tsx", "src/app/**/layout.tsx"],
     rules: {
       "no-restricted-globals": [
