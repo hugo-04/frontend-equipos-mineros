@@ -158,6 +158,10 @@ Códigos de salida (los mismos que el backend): `0` salió bien · `1` falló an
 `SIMULATE_FAILURE=health` hace fallar la verificación a propósito para demostrar el rollback, y `OMITIR_PRUEBAS=1` se salta lint, tipos y pruebas si el CI ya las corrió.
 Las pruebas del script, con Railway y las demás herramientas simuladas, están en [`scripts/test/deploy_frontend_test.sh`](scripts/test/deploy_frontend_test.sh) y corren en el CI.
 
+**Orden de despliegue con el backend:** el `PUT /equipos/{id}` del backend ya no acepta `tipoId` (solo `codigo` y `horometro`), así que este frontend y el backend
+nuevo van juntos. Se despliega **primero el backend** (`./deploy.sh`) y enseguida este frontend (`./scripts/deploy-frontend.sh`); en el rato que el frontend viejo siga
+arriba con el backend nuevo, editar un equipo falla con `400`.
+
 ## Versiones instaladas (verificadas con `npm view`)
 
 Next.js 16.4.5 · React / React DOM 19.3.1 · TypeScript 5.9.3 · Zod 4.6.7 · React Hook Form 7.91.0 · @hookform/resolvers 7.0.3 · TanStack Query 5.107.1 ·
@@ -176,6 +180,12 @@ Testing Library React 16.3.3 · ESLint 9.39.5 · Prettier 3.9.10.
 - **Límite de login del frontend en memoria** (por instancia, de mejor esfuerzo): si hubiera varias instancias en Railway, cada una tendría su propio contador; el límite fuerte es el del backend (429).
 - **Sesión validada contra el backend en cada render protegido** (`GET /tipos?page=1&size=1`): una llamada extra por navegación a cambio de detectar de inmediato un token revocado o un backend caído. Si no se puede validar, se trata como no autenticado.
 - **El ancla del rol:** el rol y el usuario que se muestran salen de los claims del JWT **sin verificar firma** (solo para la interfaz); la autorización real la decide siempre el backend (por ejemplo, `DELETE` solo para `ADMIN` → 403 → toast).
+- **Al editar un equipo solo se cambian el código y el horómetro.** El tipo es inmutable (el estado y los mantenimientos dependen de su intervalo): en el formulario se
+  muestra de solo lectura con la nota "El tipo no se puede cambiar. Si te equivocaste, elimina el equipo y créalo de nuevo", y nunca viaja en la actualización. Hay dos esquemas de Zod
+  (`crearEquipoSchema` y `editarEquipoSchema`), y el de edición pide que el horómetro no sea menor al actual porque es un acumulado que nunca baja.
+- **Las horas restantes las calcula el backend**, no el frontend: la tabla muestra `horasRestantes`, y el detalle `horasDesdeUltimoMant` y "Faltan X h para el mantenimiento" (o "Requiere mantenimiento").
+  Tras registrar un mantenimiento se refrescan el detalle, el historial y la lista, porque cambian el estado y las horas restantes. Las notas del mantenimiento son opcionales: vacías o solo con espacios no se envían.
+- **Las fechas se muestran en hora de Perú** (`America/Lima`, UTC-5 sin horario de verano). La zona va fija a propósito para que el servidor y el navegador muestren lo mismo.
 - **`details[].reason`** (contrato real) en lugar de `details[].message` (prompt); se aceptan ambos.
 - **Backend corregido antes del frontend** (rama `fix/seguridad-owasp` del backend): pendiente de desplegar con su `deploy.sh`; el frontend funciona con y sin `traceId`, maneja 429 y 413, y consume los listados paginados nuevos.
 - **Paginación del backend desde 0** (`page=0` es la primera página, como Spring Data): el frontend la usa así y muestra "Página n+1".
