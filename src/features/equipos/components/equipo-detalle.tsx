@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 import { ErrorPanel } from "@/shared/components/error-panel";
 import { PageHeader } from "@/shared/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { formatearFecha, formatearHorometro } from "@/shared/lib/formatters";
+import { formatearFecha, formatearHorometro, textoHorasRestantes } from "@/shared/lib/formatters";
 import { classifyError } from "@/shared/api/api-error";
 import { EmptyState } from "@/shared/components/empty-state";
 import { Button } from "@/shared/components/ui/button";
@@ -79,12 +79,23 @@ export function EquipoDetalle({
           <CardTitle>Estado</CardTitle>
           <EstadoBadge requiereMantenimiento={e.requiereMantenimiento} />
         </CardHeader>
-        <CardContent>
-          <dl className="grid gap-4 sm:grid-cols-3">
+        <CardContent className="space-y-4">
+          <p
+            className={
+              e.requiereMantenimiento ? "text-warning-soft-foreground font-medium" : "font-medium"
+            }
+          >
+            {textoHorasRestantes(e.horasRestantes, e.requiereMantenimiento)}
+          </p>
+          <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Dato etiqueta="Horómetro actual" valor={formatearHorometro(e.horometro)} />
             <Dato
               etiqueta="Último mantenimiento a las"
               valor={formatearHorometro(e.horometroUltimoMant)}
+            />
+            <Dato
+              etiqueta="Horas desde el último mantenimiento"
+              valor={formatearHorometro(e.horasDesdeUltimoMant)}
             />
             <Dato etiqueta="Registrado" valor={formatearFecha(e.creadoEn)} />
           </dl>

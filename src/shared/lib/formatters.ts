@@ -15,6 +15,16 @@ export function formatearHorometro(valor: number): string {
   return `${numero.format(valor)} h`;
 }
 
+/** Lo que se le dice al usuario sobre el próximo mantenimiento, según lo que calculó el backend. */
+export function textoHorasRestantes(
+  horasRestantes: number,
+  requiereMantenimiento: boolean,
+): string {
+  return requiereMantenimiento
+    ? "Requiere mantenimiento"
+    : `Faltan ${formatearHorometro(horasRestantes)} para el mantenimiento`;
+}
+
 // Las fechas del backend vienen en UTC y se muestran en hora de Perú
 export function formatearFecha(iso: string): string {
   const fecha = new Date(iso);

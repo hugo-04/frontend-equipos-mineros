@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table";
-import { formatearHorometro } from "@/shared/lib/formatters";
+import { formatearHorometro, textoHorasRestantes } from "@/shared/lib/formatters";
 import { useEliminarEquipo, useEquipos } from "../hooks/use-equipos";
 import type { Equipo } from "../types";
 import { EquipoFormDialog } from "./equipo-form-dialog";
@@ -188,6 +188,7 @@ export function EquiposView() {
                       <TableHead>Código</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead className="text-right">Horómetro</TableHead>
+                      <TableHead className="text-right">Horas restantes</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
@@ -204,6 +205,9 @@ export function EquiposView() {
                           <TableCell>{e.tipo.nombre}</TableCell>
                           <TableCell className="text-right tabular-nums">
                             {formatearHorometro(e.horometro)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatearHorometro(e.horasRestantes)}
                           </TableCell>
                           <TableCell>
                             <EstadoBadge requiereMantenimiento={e.requiereMantenimiento} />
@@ -240,6 +244,9 @@ export function EquiposView() {
                       </div>
                       <p className="text-sm tabular-nums">
                         Horómetro: {formatearHorometro(e.horometro)}
+                      </p>
+                      <p className="text-muted-foreground text-sm tabular-nums">
+                        {textoHorasRestantes(e.horasRestantes, e.requiereMantenimiento)}
                       </p>
                       <Acciones equipo={e} alEditar={abrirEditar} alEliminar={setPorEliminar} />
                     </motion.li>

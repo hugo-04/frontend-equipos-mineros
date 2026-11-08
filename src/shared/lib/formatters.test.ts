@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatearFecha, formatearHorometro } from "./formatters";
+import { formatearFecha, formatearHorometro, textoHorasRestantes } from "./formatters";
 
 describe("formatearFecha", () => {
   it("muestra la hora de Perú (UTC-5)", () => {
@@ -22,5 +22,15 @@ describe("formatearFecha", () => {
 describe("formatearHorometro", () => {
   it("usa un decimal y la unidad", () => {
     expect(formatearHorometro(4533)).toMatch(/4.533,0 h|4,533\.0 h/);
+  });
+});
+
+describe("textoHorasRestantes", () => {
+  it("dice cuántas horas faltan cuando no requiere mantenimiento", () => {
+    expect(textoHorasRestantes(150, false)).toBe("Faltan 150.0 h para el mantenimiento");
+  });
+
+  it("dice que requiere mantenimiento sin importar las horas", () => {
+    expect(textoHorasRestantes(0, true)).toBe("Requiere mantenimiento");
   });
 });
