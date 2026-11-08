@@ -85,7 +85,12 @@ export interface paths {
         };
         /** Obtiene un equipo por id */
         get: operations["obtenerEquipo"];
-        /** Edita un equipo (el horómetro no puede bajar) */
+        /**
+         * Edita el código y el horómetro de un equipo
+         * @description Solo se pueden cambiar `codigo` y `horometro`. El tipo no se puede cambiar una vez creado el equipo
+         *     (si se envía `tipoId` la respuesta es 400). El horómetro nunca baja: un valor menor al actual
+         *     devuelve 422 con el código `HOROMETRO_NO_PUEDE_BAJAR`.
+         */
         put: operations["actualizarEquipo"];
         post?: never;
         /** Elimina un equipo y todo su historial (solo ADMIN) */
@@ -236,6 +241,19 @@ export interface components {
              */
             horometro: number;
         };
+        /** @description Lo único que se puede cambiar de un equipo. El tipo es inmutable por trazabilidad, así que acá no existe `tipoId` y cualquier campo de más se rechaza con 400. */
+        EquipoUpdateRequest: {
+            /**
+             * @description Código único del equipo (letras, números y guiones, sin espacios)
+             * @example CAM-001
+             */
+            codigo: string;
+            /**
+             * @description Horas acumuladas del equipo (máximo un decimal). No puede ser menor al valor actual.
+             * @example 260
+             */
+            horometro: number;
+        };
         EquipoResponse: {
             /**
              * Format: int64
@@ -253,7 +271,17 @@ export interface components {
              */
             horometroUltimoMant: number;
             /**
-             * @description Se calcula al consultar, no se guarda
+             * @description Horas trabajadas desde el último mantenimiento (horómetro menos horometroUltimoMant)
+             * @example 60
+             */
+            horasDesdeUltimoMant: number;
+            /**
+             * @description Horas que faltan para el próximo mantenimiento; nunca baja de 0
+             * @example 190
+             */
+            horasRestantes: number;
+            /**
+             * @description Se calcula al consultar, no se guarda. Es true cuando horasDesdeUltimoMant alcanza el intervalo del tipo
              * @example true
              */
             requiereMantenimiento: boolean;
@@ -267,7 +295,7 @@ export interface components {
         };
         MantenimientoRequest: {
             /**
-             * @description Observaciones del mantenimiento (opcional)
+             * @description Observaciones del mantenimiento (opcional; si viene vacía o solo con espacios se guarda como nula)
              * @example Cambio de aceite y filtros
              */
             notas?: string;
@@ -382,7 +410,7 @@ export interface components {
                 "application/json": components["schemas"]["ErrorResponse"];
             };
         };
-        /** @description La petición es válida pero rompe una regla de negocio (por ejemplo, bajar el horómetro) */
+        /** @description La petición es válida pero rompe una regla de negocio: HOROMETRO_NO_PUEDE_BAJAR (el horómetro nuevo es menor al actual) o TIPO_NO_MODIFICABLE (se intentó cambiar el tipo de un equipo ya creado) */
         UnprocessableEntity: {
             headers: {
                 [name: string]: unknown;
@@ -622,7 +650,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["EquipoRequest"];
+                "application/json": components["schemas"]["EquipoUpdateRequest"];
             };
         };
         responses: {

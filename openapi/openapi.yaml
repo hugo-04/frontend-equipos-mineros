@@ -183,13 +183,17 @@ paths:
     put:
       tags: [Equipos]
       operationId: actualizarEquipo
-      summary: Edita un equipo (el horómetro no puede bajar)
+      summary: Edita el código y el horómetro de un equipo
+      description: |
+        Solo se pueden cambiar `codigo` y `horometro`. El tipo no se puede cambiar una vez creado el equipo
+        (si se envía `tipoId` la respuesta es 400). El horómetro nunca baja: un valor menor al actual
+        devuelve 422 con el código `HOROMETRO_NO_PUEDE_BAJAR`.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EquipoRequest'
+              $ref: '#/components/schemas/EquipoUpdateRequest'
       responses:
         '200':
           description: Equipo actualizado
@@ -362,7 +366,9 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     UnprocessableEntity:
-      description: La petición es válida pero rompe una regla de negocio (por ejemplo, bajar el horómetro)
+      description: >-
+        La petición es válida pero rompe una regla de negocio: HOROMETRO_NO_PUEDE_BAJAR (el horómetro nuevo es
+        menor al actual) o TIPO_NO_MODIFICABLE (se intentó cambiar el tipo de un equipo ya creado)
       content:
         application/json:
           schema:
@@ -553,6 +559,29 @@ components:
           example: 120.5
           x-field-extra-annotation: '@Digits(integer = 6, fraction = 1)'
 
+    EquipoUpdateRequest:
+      type: object
+      description: >-
+        Lo único que se puede cambiar de un equipo. El tipo es inmutable por trazabilidad, así que acá no existe
+        `tipoId` y cualquier campo de más se rechaza con 400.
+      additionalProperties: false
+      required: [codigo, horometro]
+      properties:
+        codigo:
+          type: string
+          minLength: 3
+          maxLength: 30
+          pattern: '^[A-Za-z0-9-]+$'
+          description: Código único del equipo (letras, números y guiones, sin espacios)
+          example: CAM-001
+        horometro:
+          type: number
+          minimum: 0
+          maximum: 999999.9
+          description: Horas acumuladas del equipo (máximo un decimal). No puede ser menor al valor actual.
+          example: 260.0
+          x-field-extra-annotation: '@Digits(integer = 6, fraction = 1)'
+
     EquipoResponse:
       type: object
       required:
@@ -561,6 +590,8 @@ components:
         - tipo
         - horometro
         - horometroUltimoMant
+        - horasDesdeUltimoMant
+        - horasRestantes
         - requiereMantenimiento
         - estado
         - creadoEn
@@ -581,9 +612,17 @@ components:
           type: number
           description: Horómetro que tenía el equipo en su último mantenimiento
           example: 0.0
+        horasDesdeUltimoMant:
+          type: number
+          description: Horas trabajadas desde el último mantenimiento (horómetro menos horometroUltimoMant)
+          example: 60.0
+        horasRestantes:
+          type: number
+          description: Horas que faltan para el próximo mantenimiento; nunca baja de 0
+          example: 190.0
         requiereMantenimiento:
           type: boolean
-          description: Se calcula al consultar, no se guarda
+          description: Se calcula al consultar, no se guarda. Es true cuando horasDesdeUltimoMant alcanza el intervalo del tipo
           example: true
         estado:
           type: string
@@ -599,7 +638,7 @@ components:
         notas:
           type: string
           maxLength: 500
-          description: Observaciones del mantenimiento (opcional)
+          description: Observaciones del mantenimiento (opcional; si viene vacía o solo con espacios se guarda como nula)
           example: Cambio de aceite y filtros
 
     MantenimientoResponse:
