@@ -178,3 +178,43 @@ describe("handleMutationError", () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 });
+
+// Errores de negocio (422) que llegan con código y sin detalle por campo
+describe("handleMutationError con los códigos de negocio de equipos", () => {
+  it("HOROMETRO_NO_PUEDE_BAJAR se marca en el campo horómetro y avisa con un toast de advertencia", () => {
+    vi.mocked(toast.warning).mockClear();
+    vi.mocked(toast.error).mockClear();
+    const ponerErrorEnCampo = vi.fn();
+    handleMutationError(
+      error(422, { code: "HOROMETRO_NO_PUEDE_BAJAR", message: "El horómetro no puede bajar" }),
+      { campos: ["codigo", "horometro"], ponerErrorEnCampo },
+    );
+    expect(ponerErrorEnCampo).toHaveBeenCalledWith("horometro", "El horómetro no puede bajar");
+    expect(toast.warning).toHaveBeenCalledWith("El horómetro no puede bajar");
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("si el formulario no tiene ese campo, solo avisa con el toast", () => {
+    vi.mocked(toast.warning).mockClear();
+    const ponerErrorEnCampo = vi.fn();
+    handleMutationError(error(422, { code: "HOROMETRO_NO_PUEDE_BAJAR", message: "No baja" }), {
+      campos: ["notas"],
+      ponerErrorEnCampo,
+    });
+    expect(ponerErrorEnCampo).not.toHaveBeenCalled();
+    expect(toast.warning).toHaveBeenCalledWith("No baja");
+  });
+
+  it("TIPO_NO_MODIFICABLE es un aviso de advertencia, no un error de sistema", () => {
+    vi.mocked(toast.warning).mockClear();
+    vi.mocked(toast.error).mockClear();
+    const ponerErrorEnCampo = vi.fn();
+    handleMutationError(
+      error(422, { code: "TIPO_NO_MODIFICABLE", message: "El tipo no se puede cambiar" }),
+      { campos: ["codigo", "horometro"], ponerErrorEnCampo },
+    );
+    expect(ponerErrorEnCampo).not.toHaveBeenCalled();
+    expect(toast.warning).toHaveBeenCalledWith("El tipo no se puede cambiar");
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+});

@@ -4,6 +4,16 @@ import { ApiError, classifyError } from "./api-error";
 /** Lo que ve el usuario cuando algo falla de nuestro lado. Nunca lleva trazas ni detalles técnicos. */
 export const MENSAJE_SISTEMA = "Algo salió mal de nuestro lado. Inténtalo de nuevo.";
 
+/**
+ * Errores de negocio (422) que el backend manda con un código y sin detalle por campo, pero que tienen un campo
+ * claro en el formulario. Con esto el mensaje queda junto al campo y no solo en el toast.
+ * TIPO_NO_MODIFICABLE no está acá a propósito: el formulario de edición no tiene campo de tipo, así que va como aviso.
+ */
+const CAMPO_POR_CODIGO: Readonly<Record<string, string>> = {
+  HOROMETRO_NO_PUEDE_BAJAR: "horometro",
+  HOROMETRO_INVALIDO: "horometro",
+};
+
 export interface DetalleCampo {
   campo: string;
   mensaje: string;
@@ -55,6 +65,10 @@ export function handleMutationError(error: unknown, opciones: OpcionesManejo = {
     case "validation": {
       const { enCampos, sueltos } = mapearDetalles(api as ApiError, opciones.campos ?? []);
       enCampos.forEach((d) => opciones.ponerErrorEnCampo?.(d.campo, d.mensaje));
+      const campoDelCodigo = api ? CAMPO_POR_CODIGO[api.code] : undefined;
+      if (campoDelCodigo && opciones.campos?.includes(campoDelCodigo)) {
+        opciones.ponerErrorEnCampo?.(campoDelCodigo, api?.message || "Revisa este campo");
+      }
       if (api?.status === 413) {
         toast.warning("Los datos enviados son demasiado grandes");
       } else if (enCampos.length > 0 && sueltos.length === 0) {

@@ -1,8 +1,13 @@
 import { peticion } from "@/shared/api/http";
 import { obtenerTodasLasPaginas } from "@/shared/api/paginacion";
 import { idSchema } from "@/shared/schemas/pagina";
-import { crearEquipoFormSchema, equipoSchema, paginaEquiposSchema } from "../schemas/equipo.schema";
-import type { Equipo, EquipoRequest } from "../types";
+import {
+  crearEquipoSchema,
+  editarEquipoSchema,
+  equipoSchema,
+  paginaEquiposSchema,
+} from "../schemas/equipo.schema";
+import type { CrearEquipoRequest, EditarEquipoRequest, Equipo } from "../types";
 
 /** Trae todos los equipos (junta las páginas que entrega el backend). */
 export function listarEquipos(signal?: AbortSignal): Promise<Equipo[]> {
@@ -18,29 +23,28 @@ export function obtenerEquipo(id: number, signal?: AbortSignal): Promise<Equipo>
 }
 
 /** Vuelve a validar el cuerpo con las reglas del formulario antes de enviarlo, por si alguien llama a la API sin pasar por el formulario. */
-function validarCuerpo(cuerpo: EquipoRequest): EquipoRequest {
-  const esquema = crearEquipoFormSchema();
-  const resultado = esquema.parse({
+export function crearEquipo(cuerpo: CrearEquipoRequest): Promise<Equipo> {
+  const valido = crearEquipoSchema.parse({
     codigo: cuerpo.codigo,
     tipoId: String(cuerpo.tipoId),
     horometro: String(cuerpo.horometro),
   });
-  return resultado;
+  return peticion("/equipos", { metodo: "POST", cuerpo: valido, esquema: equipoSchema });
 }
 
-export function crearEquipo(cuerpo: EquipoRequest): Promise<Equipo> {
-  return peticion("/equipos", {
-    metodo: "POST",
-    cuerpo: validarCuerpo(cuerpo),
-    esquema: equipoSchema,
-  });
-}
-
-export function actualizarEquipo(id: number, cuerpo: EquipoRequest): Promise<Equipo> {
+/**
+ * Edita código y horómetro. El cuerpo sale del esquema de edición, que no tiene tipoId: aunque alguien lo
+ * cuele en el objeto, no se envía (el backend lo rechazaría con 400).
+ */
+export function actualizarEquipo(id: number, cuerpo: EditarEquipoRequest): Promise<Equipo> {
   const idValido = idSchema.parse(id);
+  const valido = editarEquipoSchema().parse({
+    codigo: cuerpo.codigo,
+    horometro: String(cuerpo.horometro),
+  });
   return peticion(`/equipos/${encodeURIComponent(idValido)}`, {
     metodo: "PUT",
-    cuerpo: validarCuerpo(cuerpo),
+    cuerpo: valido,
     esquema: equipoSchema,
   });
 }

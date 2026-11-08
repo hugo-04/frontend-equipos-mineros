@@ -10,7 +10,7 @@ import {
   listarEquipos,
   obtenerEquipo,
 } from "../api/equipos.api";
-import type { EquipoRequest } from "../types";
+import type { CrearEquipoRequest, EditarEquipoRequest } from "../types";
 
 /** Todas las claves de consulta salen de acá; ningún componente arma una a mano. Así invalidar es siempre consistente. */
 export const equipoKeys = {
@@ -43,7 +43,7 @@ export function useEquipo(id: number) {
 export function useCrearEquipo(opciones: () => OpcionesManejo = () => ({})) {
   const cliente = useQueryClient();
   return useMutation({
-    mutationFn: (cuerpo: EquipoRequest) => crearEquipo(cuerpo),
+    mutationFn: (cuerpo: CrearEquipoRequest) => crearEquipo(cuerpo),
     onSuccess: (equipo) => {
       void cliente.invalidateQueries({ queryKey: equipoKeys.list() });
       toast.success(`Equipo ${equipo.codigo} creado`);
@@ -52,11 +52,11 @@ export function useCrearEquipo(opciones: () => OpcionesManejo = () => ({})) {
   });
 }
 
-/** Edita un equipo y refresca la lista y el detalle. */
+/** Edita el código y el horómetro de un equipo (el tipo no cambia) y refresca la lista y el detalle. */
 export function useActualizarEquipo(id: number, opciones: () => OpcionesManejo = () => ({})) {
   const cliente = useQueryClient();
   return useMutation({
-    mutationFn: (cuerpo: EquipoRequest) => actualizarEquipo(id, cuerpo),
+    mutationFn: (cuerpo: EditarEquipoRequest) => actualizarEquipo(id, cuerpo),
     onSuccess: (equipo) => {
       void cliente.invalidateQueries({ queryKey: equipoKeys.list() });
       void cliente.invalidateQueries({ queryKey: equipoKeys.detail(id) });

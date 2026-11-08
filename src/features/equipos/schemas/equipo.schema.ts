@@ -9,6 +9,9 @@ export const equipoSchema = z.object({
   tipo: tipoEquipoSchema,
   horometro: z.number(),
   horometroUltimoMant: z.number(),
+  // Los calcula el backend en cada consulta; el frontend no los vuelve a calcular
+  horasDesdeUltimoMant: z.number(),
+  horasRestantes: z.number(),
   requiereMantenimiento: z.boolean(),
   estado: z.string(),
   creadoEn: z.string(),
@@ -30,36 +33,48 @@ const textoHorometro = z
       .regex(/^\d+(\.\d+)?$/, "Ingresa un número válido (sin signo ni letras)"),
   );
 
+const codigoEquipo = z
+  .string({ error: "El código es obligatorio" })
+  .trim()
+  .min(3, "El código debe tener al menos 3 caracteres")
+  .max(30, "El código no puede superar los 30 caracteres")
+  .regex(/^[A-Za-z0-9-]+$/, "Solo letras, números y guiones");
+
+/** De 0 a 999999.9 con un decimal como máximo, que es lo que acepta el contrato. */
+const horometroEquipo = textoHorometro
+  .pipe(z.string().regex(/^\d+(\.\d)?$/, "Máximo un decimal"))
+  .transform(Number)
+  .refine((n) => n >= 0, "El horómetro no puede ser negativo")
+  .refine((n) => n <= HOROMETRO_MAXIMO, `El horómetro no puede superar ${HOROMETRO_MAXIMO}`);
+
+/** Al crear se elige el tipo: es un entero mayor que 0 y después ya no se puede cambiar. */
+export const crearEquipoSchema = z.object({
+  codigo: codigoEquipo,
+  tipoId: z
+    .string({ error: "Selecciona un tipo" })
+    .regex(/^[1-9]\d*$/, "Selecciona un tipo")
+    .transform(Number),
+  horometro: horometroEquipo,
+});
+
 /**
- * Las reglas del formulario de equipo, que son las mismas del contrato: el código tiene de 3 a 30 letras, números
- * o guiones; el tipo es un entero mayor que 0; y el horómetro va de 0 a 999999.9 con un decimal como máximo.
- * Al editar se pasa `horometroMinimo` (el valor actual) porque el horómetro no puede bajar.
+ * Al editar solo se cambian el código y el horómetro. El tipo no está en el esquema: es inmutable (el estado y
+ * los mantenimientos se rigen por el intervalo de ese tipo), así que nunca viaja en una actualización. Zod
+ * descarta los campos que no conoce, y por eso un `tipoId` suelto no llega al backend.
+ *
+ * `horometroActual` es el valor que ya tiene el equipo: el horómetro es un acumulado y no puede bajar.
  */
-export function crearEquipoFormSchema(opciones: { horometroMinimo?: number } = {}) {
+export function editarEquipoSchema(horometroActual?: number) {
   return z.object({
-    codigo: z
-      .string({ error: "El código es obligatorio" })
-      .trim()
-      .min(3, "El código debe tener al menos 3 caracteres")
-      .max(30, "El código no puede superar los 30 caracteres")
-      .regex(/^[A-Za-z0-9-]+$/, "Solo letras, números y guiones"),
-    tipoId: z
-      .string({ error: "Selecciona un tipo" })
-      .regex(/^[1-9]\d*$/, "Selecciona un tipo")
-      .transform(Number),
-    horometro: textoHorometro
-      .pipe(z.string().regex(/^\d+(\.\d)?$/, "Máximo un decimal"))
-      .transform(Number)
-      .refine((n) => n >= 0, "El horómetro no puede ser negativo")
-      .refine((n) => n <= HOROMETRO_MAXIMO, `El horómetro no puede superar ${HOROMETRO_MAXIMO}`)
-      .refine(
-        (n) => opciones.horometroMinimo === undefined || n >= opciones.horometroMinimo,
-        `El horómetro no puede ser menor al actual (${opciones.horometroMinimo ?? 0})`,
-      ),
+    codigo: codigoEquipo,
+    horometro: horometroEquipo.refine(
+      (n) => horometroActual === undefined || n >= horometroActual,
+      `El horómetro no puede ser menor al actual (${horometroActual ?? 0})`,
+    ),
   });
 }
 
-export const equipoFormSchema = crearEquipoFormSchema();
-
-export type EquipoFormInput = z.input<typeof equipoFormSchema>;
-export type EquipoFormValues = z.output<typeof equipoFormSchema>;
+export type CrearEquipoInput = z.input<typeof crearEquipoSchema>;
+export type CrearEquipoValues = z.output<typeof crearEquipoSchema>;
+export type EditarEquipoInput = z.input<ReturnType<typeof editarEquipoSchema>>;
+export type EditarEquipoValues = z.output<ReturnType<typeof editarEquipoSchema>>;

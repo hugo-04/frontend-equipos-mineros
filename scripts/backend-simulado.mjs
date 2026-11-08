@@ -23,13 +23,16 @@ const mantenimientos = [];
 
 const vista = (e) => {
   const tipo = tipos.find((t) => t.id === e.tipoId);
-  const requiere = e.horometro - e.ultimo >= tipo.intervaloHoras;
+  const desde = e.horometro - e.ultimo;
+  const requiere = desde >= tipo.intervaloHoras;
   return {
     id: e.id,
     codigo: e.codigo,
     tipo,
     horometro: e.horometro,
     horometroUltimoMant: e.ultimo,
+    horasDesdeUltimoMant: desde,
+    horasRestantes: Math.max(0, tipo.intervaloHoras - desde),
     requiereMantenimiento: requiere,
     estado: requiere ? "REQUIERE_MANTENIMIENTO" : "OK",
     creadoEn: "2026-01-01T00:00:00Z",
@@ -144,9 +147,19 @@ createServer(async (req, res) => {
     if (req.method === "GET") return json(res, 200, vista(e));
     if (req.method === "PUT") {
       const c = await leerCuerpo(req);
+      // Igual que el contrato real: al editar solo se aceptan código y horómetro
+      if (Object.keys(c ?? {}).some((k) => k !== "codigo" && k !== "horometro"))
+        return error(
+          res,
+          400,
+          "PROPIEDAD_DESCONOCIDA",
+          "El cuerpo trae campos que no se pueden editar",
+        );
+      if (equipos.some((x) => x.id !== e.id && x.codigo === c.codigo))
+        return error(res, 409, "CODIGO_DUPLICADO", `El código ${c.codigo} ya existe`);
       if (c.horometro < e.horometro)
-        return error(res, 422, "HOROMETRO_INVALIDO", "El horómetro no puede disminuir");
-      Object.assign(e, { codigo: c.codigo, tipoId: c.tipoId, horometro: c.horometro });
+        return error(res, 422, "HOROMETRO_NO_PUEDE_BAJAR", "El horómetro no puede bajar");
+      Object.assign(e, { codigo: c.codigo, horometro: c.horometro });
       return json(res, 200, vista(e));
     }
     if (req.method === "DELETE") {
