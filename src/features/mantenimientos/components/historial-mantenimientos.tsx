@@ -6,7 +6,13 @@ import { useState } from "react";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorPanel } from "@/shared/components/error-panel";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import {
   Table,
@@ -19,15 +25,22 @@ import {
 import { formatearFecha, formatearHorometro } from "@/shared/lib/formatters";
 import { useMantenimientos } from "../hooks/use-mantenimientos";
 
-/** El historial de mantenimientos de un equipo, paginado por el backend. */
+/**
+ * El historial de mantenimientos de un equipo, paginado por el backend. Tiene el ancla `#historial` para poder
+ * llegar directo desde la lista de equipos.
+ */
 export function HistorialMantenimientos({ equipoId }: { equipoId: number }) {
   const [pagina, setPagina] = useState(0);
   const historial = useMantenimientos(equipoId, pagina);
 
   return (
-    <Card>
+    <Card id="historial" className="scroll-mt-20">
       <CardHeader>
         <CardTitle>Historial de mantenimientos</CardTitle>
+        <CardDescription>
+          Cada vez que se registra un mantenimiento queda guardado aquí, con su fecha y el horómetro
+          que tenía el equipo en ese momento.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {historial.isPending ? (
@@ -41,8 +54,8 @@ export function HistorialMantenimientos({ equipoId }: { equipoId: number }) {
         ) : historial.data.content.length === 0 ? (
           <EmptyState
             icono={<History className="size-8" aria-hidden="true" />}
-            titulo="Sin mantenimientos"
-            descripcion="Cuando registres uno aparecerá aquí."
+            titulo="Todavía no hay mantenimientos registrados"
+            descripcion="Cuando se haga el mantenimiento de este equipo, pulsa «Registrar mantenimiento» (arriba): quedará guardado aquí."
           />
         ) : (
           <div className="space-y-4">

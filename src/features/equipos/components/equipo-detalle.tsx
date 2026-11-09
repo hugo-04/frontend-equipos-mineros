@@ -87,6 +87,17 @@ export function EquipoDetalle({
           >
             {textoHorasRestantes(e.horasRestantes, e.requiereMantenimiento)}
           </p>
+          <p className="text-muted-foreground text-sm">
+            {e.requiereMantenimiento
+              ? "Cuando se haga el mantenimiento, pulsa «Registrar mantenimiento» para que el conteo de horas vuelva a empezar. "
+              : "Cuando llegue la hora y se haga el mantenimiento, regístralo con el botón «Registrar mantenimiento». "}
+            <a
+              href="#historial"
+              className="text-primary font-medium underline-offset-4 hover:underline"
+            >
+              Ver el historial de mantenimientos
+            </a>
+          </p>
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Dato etiqueta="Horómetro actual" valor={formatearHorometro(e.horometro)} />
             <Dato
