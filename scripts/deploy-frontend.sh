@@ -165,7 +165,9 @@ desplegar_tag() {
   carpeta="$(mktemp -d)"
   printf 'FROM %s:%s\n' "$REGISTRY_IMAGE" "$tag" >"$carpeta/Dockerfile"
   log "Desplegando $REGISTRY_IMAGE:$tag en Railway (servicio $RAILWAY_SERVICE)..."
-  local args=(up "$carpeta" --service "$RAILWAY_SERVICE" --ci)
+  # --path-as-root: sin esa opción la CLI toma como raíz del archivo el directorio donde se ejecuta y esta carpeta
+  # temporal queda fuera de él ("prefix not found"). Con la opción, la carpeta con el Dockerfile es la raíz.
+  local args=(up "$carpeta" --path-as-root --service "$RAILWAY_SERVICE" --ci)
   [ -n "${RAILWAY_ENVIRONMENT:-}" ] && args+=(--environment "$RAILWAY_ENVIRONMENT")
   [ -n "${RAILWAY_PROJECT:-}" ] && args+=(--project "$RAILWAY_PROJECT")
   local resultado=0

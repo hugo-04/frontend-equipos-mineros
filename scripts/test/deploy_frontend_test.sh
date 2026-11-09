@@ -179,6 +179,8 @@ t_exito() {
   [ "$(cat "$DEPLOY_STATE_DIR/previous_tag" 2>/dev/null)" = "old1234" ] || fallo "no se guardó la versión previa en previous_tag"
   grep -q "docker build --provenance=false --sbom=false --build-arg APP_VERSION=abc1234 -t ghcr.io/org/equipos-mineros-frontend:abc1234" "$ESC/state/calls.log" \
     || fallo "la imagen no se etiquetó con el SHA corto"
+  grep -q "^railway up .* --path-as-root " "$ESC/state/calls.log" \
+    || fallo "railway up debe llevar --path-as-root porque la carpeta del Dockerfile está fuera del proyecto"
 }
 
 # (2) falla en health -> rollback al tag previo y exit != 0
