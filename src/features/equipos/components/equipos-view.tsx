@@ -1,9 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Eye, PackageOpen, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { History, Info, PackageOpen, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useTipos } from "@/features/tipos";
 import { ConfirmDialog } from "@/shared/components/confirm-dialog";
 import { EmptyState } from "@/shared/components/empty-state";
@@ -46,8 +46,90 @@ const entrada = (indice: number) => ({
   exit: { opacity: 0, y: -4, transition: { duration: 0.15 } },
 });
 
-/** La pantalla de equipos: tabla (o tarjetas en móvil) con búsqueda y filtros que se aplican en el cliente, más crear, editar y eliminar. */
-export function EquiposView() {
+const CLAVE_AYUDA = "equipos.ayuda-mantenimiento-oculta";
+const EVENTO_AYUDA = "equipos:ayuda-oculta";
+
+function leerAyudaOculta(): boolean {
+  try {
+    return window.localStorage.getItem(CLAVE_AYUDA) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function suscribirseAlAlmacenamiento(avisar: () => void): () => void {
+  window.addEventListener("storage", avisar);
+  window.addEventListener(EVENTO_AYUDA, avisar);
+  return () => {
+    window.removeEventListener("storage", avisar);
+    window.removeEventListener(EVENTO_AYUDA, avisar);
+  };
+}
+
+/**
+ * Explica en tres líneas cómo se controla el mantenimiento, para quien entra por primera vez y no sabe qué hace cada botón.
+ * Se puede descartar y el navegador lo recuerda; si no puede guardarlo (modo privado, por ejemplo), simplemente vuelve a salir.
+ */
+function AyudaMantenimiento() {
+  // El navegador es la fuente de verdad de "ya la descartó"; en el servidor se muestra y el cliente corrige al hidratar
+  const guardadaComoOculta = useSyncExternalStore(
+    suscribirseAlAlmacenamiento,
+    leerAyudaOculta,
+    () => false,
+  );
+  // Si el navegador no deja guardar (modo privado), el aviso se oculta igual mientras dure la visita
+  const [descartada, setDescartada] = useState(false);
+
+  if (guardadaComoOculta || descartada) return null;
+
+  const ocultar = () => {
+    setDescartada(true);
+    try {
+      window.localStorage.setItem(CLAVE_AYUDA, "1");
+      window.dispatchEvent(new Event(EVENTO_AYUDA));
+    } catch {
+      // no pasa nada: se mostrará de nuevo la próxima vez
+    }
+  };
+
+  return (
+    <section
+      aria-label="Cómo se controla el mantenimiento"
+      className="bg-muted/50 flex items-start gap-3 rounded-lg border p-4"
+    >
+      <Info className="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
+      <div className="flex-1 space-y-1 text-sm">
+        <p className="font-semibold">¿Cómo se controla el mantenimiento?</p>
+        <ul className="text-muted-foreground list-disc space-y-1 pl-5">
+          <li>
+            Cada equipo necesita mantenimiento cada cierto número de horas de su horómetro (depende
+            de su tipo).
+          </li>
+          <li>
+            Cuando llega ese momento aparece <strong>Requiere mantenimiento</strong>. Después de
+            hacerlo, pulsa <strong>Registrar</strong> en su fila: el conteo de horas vuelve a
+            empezar.
+          </li>
+          <li>
+            Pulsa <strong>Historial</strong> para ver todos los mantenimientos anteriores de un
+            equipo.
+          </li>
+        </ul>
+      </div>
+      <Button variant="ghost" size="sm" onClick={ocultar}>
+        <X aria-hidden="true" />
+        Entendido
+      </Button>
+    </section>
+  );
+}
+
+/**
+ * La pantalla de equipos: tabla (o tarjetas en móvil) con búsqueda y filtros que se aplican en el cliente, más crear, editar y eliminar.
+ * `accionesFila` deja que la ruta ponga junto a cada equipo lo que viene de otra feature (por ejemplo, registrar un mantenimiento),
+ * porque las features no se importan entre sí.
+ */
+export function EquiposView({ accionesFila }: { accionesFila?: (equipo: Equipo) => ReactNode }) {
   const equipos = useEquipos();
   const tipos = useTipos();
   const eliminar = useEliminarEquipo();
@@ -117,6 +199,7 @@ export function EquiposView() {
         />
       ) : (
         <>
+          <AyudaMantenimiento />
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="relative">
               <Search
@@ -190,7 +273,8 @@ export function EquiposView() {
                       <TableHead className="text-right">Horómetro</TableHead>
                       <TableHead className="text-right">Horas restantes</TableHead>
                       <TableHead>Estado</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
+                      <TableHead>Mantenimiento</TableHead>
+                      <TableHead className="text-right">Editar o eliminar</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -201,7 +285,15 @@ export function EquiposView() {
                           {...entrada(i)}
                           className="hover:bg-muted/50 border-b transition-colors"
                         >
-                          <TableCell className="font-medium">{e.codigo}</TableCell>
+                          <TableCell className="font-medium">
+                            <Link
+                              href={`/equipos/${e.id}`}
+                              title={`Ver el detalle de ${e.codigo}`}
+                              className="text-primary underline-offset-4 hover:underline"
+                            >
+                              {e.codigo}
+                            </Link>
+                          </TableCell>
                           <TableCell>{e.tipo.nombre}</TableCell>
                           <TableCell className="text-right tabular-nums">
                             {formatearHorometro(e.horometro)}
@@ -211,6 +303,11 @@ export function EquiposView() {
                           </TableCell>
                           <TableCell>
                             <EstadoBadge requiereMantenimiento={e.requiereMantenimiento} />
+                          </TableCell>
+                          <TableCell>
+                            <AccionesMantenimiento equipo={e}>
+                              {accionesFila?.(e)}
+                            </AccionesMantenimiento>
                           </TableCell>
                           <TableCell>
                             <Acciones
@@ -237,7 +334,14 @@ export function EquiposView() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-semibold">{e.codigo}</p>
+                          <p className="font-semibold">
+                            <Link
+                              href={`/equipos/${e.id}`}
+                              className="text-primary underline-offset-4 hover:underline"
+                            >
+                              {e.codigo}
+                            </Link>
+                          </p>
                           <p className="text-muted-foreground text-sm">{e.tipo.nombre}</p>
                         </div>
                         <EstadoBadge requiereMantenimiento={e.requiereMantenimiento} />
@@ -248,6 +352,7 @@ export function EquiposView() {
                       <p className="text-muted-foreground text-sm tabular-nums">
                         {textoHorasRestantes(e.horasRestantes, e.requiereMantenimiento)}
                       </p>
+                      <AccionesMantenimiento equipo={e}>{accionesFila?.(e)}</AccionesMantenimiento>
                       <Acciones equipo={e} alEditar={abrirEditar} alEliminar={setPorEliminar} />
                     </motion.li>
                   ))}
@@ -310,6 +415,29 @@ export function EquiposView() {
   );
 }
 
+/** Lo que se hace con el mantenimiento de un equipo, con texto en cada botón para que se entienda sin explicación. */
+function AccionesMantenimiento({ equipo, children }: { equipo: Equipo; children?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {children}
+      <Button
+        asChild
+        variant="outline"
+        size="sm"
+        title={`Ver los mantenimientos anteriores de ${equipo.codigo}`}
+      >
+        <Link
+          href={`/equipos/${equipo.id}#historial`}
+          aria-label={`Ver el historial de mantenimientos de ${equipo.codigo}`}
+        >
+          <History aria-hidden="true" />
+          Historial
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
 function Acciones({
   equipo,
   alEditar,
@@ -321,15 +449,11 @@ function Acciones({
 }) {
   return (
     <div className="flex justify-end gap-1">
-      <Button asChild variant="ghost" size="icon" aria-label={`Ver detalle de ${equipo.codigo}`}>
-        <Link href={`/equipos/${equipo.id}`}>
-          <Eye aria-hidden="true" />
-        </Link>
-      </Button>
       <Button
         variant="ghost"
         size="icon"
         aria-label={`Editar ${equipo.codigo}`}
+        title={`Editar ${equipo.codigo}`}
         onClick={() => alEditar(equipo)}
       >
         <Pencil aria-hidden="true" />
@@ -338,6 +462,7 @@ function Acciones({
         variant="ghost"
         size="icon"
         aria-label={`Eliminar ${equipo.codigo}`}
+        title={`Eliminar ${equipo.codigo}`}
         onClick={() => alEliminar(equipo)}
       >
         <Trash2 className="text-destructive" aria-hidden="true" />

@@ -22,13 +22,20 @@ import {
   type MantenimientoFormValues,
 } from "../schemas/mantenimiento.schema";
 
-/** Botón y diálogo para registrar un mantenimiento, con notas opcionales. Al registrarlo, el ciclo del equipo vuelve a empezar. */
+/**
+ * Botón y diálogo para registrar un mantenimiento, con notas opcionales. Al registrarlo, el ciclo del equipo vuelve a empezar.
+ * `destacado` lo pinta como acción principal (cuando el equipo ya requiere mantenimiento) y `compacto` lo achica para usarlo en una fila de la lista.
+ */
 export function RegistrarMantenimientoDialog({
   equipoId,
   codigo,
+  destacado = true,
+  compacto = false,
 }: {
   equipoId: number;
   codigo: string;
+  destacado?: boolean;
+  compacto?: boolean;
 }) {
   const [abierto, setAbierto] = useState(false);
   const registrar = useRegistrarMantenimiento(equipoId);
@@ -59,16 +66,24 @@ export function RegistrarMantenimientoDialog({
 
   return (
     <>
-      <Button onClick={() => setAbierto(true)}>
+      <Button
+        variant={destacado ? "default" : "outline"}
+        size={compacto ? "sm" : "default"}
+        aria-label={`Registrar mantenimiento de ${codigo}`}
+        title={`Registrar un mantenimiento que ya se hizo en ${codigo}`}
+        onClick={() => setAbierto(true)}
+      >
         <Wrench aria-hidden="true" />
-        Registrar mantenimiento
+        {compacto ? "Registrar" : "Registrar mantenimiento"}
       </Button>
       <Dialog open={abierto} onOpenChange={cambiar}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Registrar mantenimiento de {codigo}</DialogTitle>
             <DialogDescription>
-              Se guardará con el horómetro actual y el ciclo de mantenimiento volverá a empezar.
+              Úsalo cuando ya se hizo el mantenimiento de este equipo. Queda guardado en su
+              historial con la fecha y el horómetro de ahora, y el conteo de horas hasta el próximo
+              mantenimiento vuelve a empezar.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={enviar} noValidate className="space-y-4">

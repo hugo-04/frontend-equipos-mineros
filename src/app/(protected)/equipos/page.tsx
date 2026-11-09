@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { EquiposView } from "@/features/equipos";
+import { EquiposConMantenimiento } from "./equipos-con-mantenimiento";
 
 export const metadata: Metadata = { title: "Equipos" };
 
-/** La página de equipos; toda la lógica está en la feature. */
+/** La página de equipos; la lógica está en las features y esta ruta las junta. */
 export default function EquiposPage() {
-  return <EquiposView />;
+  return <EquiposConMantenimiento />;
 }
