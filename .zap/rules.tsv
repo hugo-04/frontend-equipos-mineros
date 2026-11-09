@@ -5,3 +5,4 @@
 10109	IGNORE	(Modern Web Application - informativo: avisa de que la app es una SPA, no es una vulnerabilidad)
 10111	IGNORE	(Authentication Request Identified - informativo: reconoce el formulario de login, no es una vulnerabilidad)
 90004	IGNORE	(Cross-Origin-Embedder-Policy - refuerzo opcional de aislamiento entre orígenes que no usamos; activarlo puede bloquear recursos de otros orígenes)
+10202	IGNORE	(Absence of Anti-CSRF Tokens - el formulario de login se envía con fetch a /api/auth/login, que verifica el Origin igual que logout y el proxy, y la cookie es SameSite=Lax; no se usan tokens CSRF)
