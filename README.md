@@ -112,7 +112,7 @@ El contrato del backend entrega `details[].reason` (el prompt decía `message`):
 npm run lint && npm run typecheck && npm run test && npm run build
 ```
 
-**167 pruebas** (Vitest + Testing Library): esquemas Zod (casos válidos e inválidos), `classifyError` y mapeo de `details`, componentes
+**205 pruebas** (Vitest + Testing Library): esquemas Zod (casos válidos e inválidos), `classifyError` y mapeo de `details`, componentes
 (formulario de equipo con errores accesibles, 409 en el campo, error de sistema sin detalles, badge de estado, diálogo de confirmación)
 y la **seguridad**: `from` del login (`//evil.com`, `https://…`, `/\evil`, `%0d%0a`), lista blanca del proxy (`..`, `%2e%2e`, esquemas y hosts externos,
 rutas fuera de la lista), que el token **jamás** salga en el cuerpo del login ni del proxy, que se borre la cookie en 401, que se rechacen
@@ -140,7 +140,7 @@ Las respuestas autenticadas y del proxy llevan `Cache-Control: no-store`, y las 
 
 [`ci.yml`](.github/workflows/ci.yml), en cada push/PR: lint, tipos, pruebas, build y `npm audit --audit-level=high`; **gitleaks**; **CodeQL**
 (en repos privados necesita GitHub Advanced Security; se apaga con la variable `CODEQL_HABILITADO=false`); y **OWASP ZAP baseline** contra la app levantada con el
-backend simulado (`scripts/backend-simulado.mjs`; avisos aceptados, con motivo, en [`.zap/rules.tsv`](.zap/rules.tsv)). Acciones fijadas por SHA; Dependabot las mantiene.
+backend simulado (`scripts/backend-simulado.mjs`; avisos aceptados, con motivo, en [`.zap/rules.tsv`](.zap/rules.tsv)). Acciones fijadas por SHA; Dependabot las mantiene. El despliegue lo hace [`deploy.yml`](.github/workflows/deploy.yml) (ver [Despliegue](#despliegue-railway)).
 
 ## Despliegue (Railway)
 
@@ -148,8 +148,8 @@ Backend, MySQL y frontend se despliegan en **Railway**. El frontend usa el mismo
 imagen con el [`Dockerfile`](Dockerfile) (Node de `.nvmrc`, salida `standalone` de Next, usuario sin root), se publica en GHCR con el **SHA corto del commit** como tag y
 Railway la despliega. Desplegar y hacer rollback son la misma operación con otro tag.
 
-1. En Railway crea un servicio para el frontend y define su variable `BACKEND_URL` con la URL del backend (por ejemplo la interna de Railway). Es solo del servidor: se lee al arrancar, no al construir.
-2. Exporta `RAILWAY_TOKEN` (o, con un token de cuenta o de workspace, `RAILWAY_API_TOKEN` junto con `RAILWAY_PROJECT` y `RAILWAY_ENVIRONMENT`), `RAILWAY_SERVICE`, `APP_URL` (URL pública del frontend) y `REGISTRY_IMAGE` (por ejemplo `ghcr.io/mi-org/equipos-mineros-frontend`). Hay que haber iniciado sesión en GHCR (`docker login ghcr.io`) y la imagen debe poder descargarla Railway (paquete público, como el del backend).
+1. En Railway crea un *servicio vacío* para el frontend (no se conecta ningún repo: la imagen llega con `railway up`), genera su dominio público (puerto `3000`) y define sus variables: `BACKEND_URL` con la URL pública del backend (`https://…`, **sin `/` al final ni espacios**) y `PORT=3000`. `BACKEND_URL` es solo del servidor: se lee al arrancar, no al construir. En *Settings → Deploy* pon el **Healthcheck Path** `/api/health`.
+2. Para desplegar a mano exporta `RAILWAY_TOKEN` (o, con un token de cuenta o de workspace, `RAILWAY_API_TOKEN` junto con `RAILWAY_PROJECT` y `RAILWAY_ENVIRONMENT`), `RAILWAY_SERVICE`, `APP_URL` (URL pública del frontend) y `REGISTRY_IMAGE` (por ejemplo `ghcr.io/mi-org/equipos-mineros-frontend`). Hay que haber iniciado sesión en GHCR (`docker login ghcr.io`) y la imagen debe poder descargarla Railway (paquete público, como el del backend).
 3. `./scripts/deploy-frontend.sh`: verifica herramientas y variables, `npm ci` + lint/tipos/pruebas, construye y publica la imagen, anota la versión que corre ahora
    (la lee de `APP_URL/api/health`), despliega en Railway y **verifica `/api/health` con reintentos y que responda la versión nueva**. Si falla el despliegue o la verificación, redesplega la versión anterior.
    Se puede ejecutar varias veces seguidas: si esa versión ya está arriba y sana, no hace nada.
@@ -164,6 +164,20 @@ Las pruebas del script, con Railway y las demás herramientas simuladas, están 
 **Orden de despliegue con el backend:** el `PUT /equipos/{id}` del backend ya no acepta `tipoId` (solo `codigo` y `horometro`), así que este frontend y el backend
 nuevo van juntos. Se despliega **primero el backend** (`./deploy.sh`) y enseguida este frontend (`./scripts/deploy-frontend.sh`); en el rato que el frontend viejo siga
 arriba con el backend nuevo, editar un equipo falla con `400`.
+
+### Problemas que aparecieron al desplegar y cómo se resolvieron
+
+| Síntoma | Causa | Solución |
+|---|---|---|
+| `error from registry: denied` en `docker push` (las capas sí se suben) | Docker publica la imagen como índice OCI con un manifiesto de atestación, y GHCR rechaza ponerle la etiqueta | `docker build --provenance=false --sbom=false`; además `docker push` se reintenta (`PUSH_RETRIES`) |
+| `Indexing... prefix not found` en `railway up` | La CLI toma como raíz del archivo el directorio donde corre, y la carpeta temporal con el `Dockerfile` queda fuera | `railway up <carpeta> --path-as-root` |
+| `Permission denied` al ejecutar `deploy_frontend_test.sh` en el CI | En Windows los archivos se versionan sin permiso de ejecución | `git update-index --chmod=+x <script>` |
+| ZAP: información sensible en la URL | El formulario de login no tenía `method`; si se enviaba antes de cargar JavaScript, el navegador usaba GET y la clave viajaba en la URL | `method="post"` en el formulario; los avisos informativos que quedan se aceptan, con su motivo, en `.zap/rules.tsv` |
+| `Internal server error. Correlation ID: …` sin que arranque ningún job | Incidente de GitHub Actions | Esperar a que GitHub se recupere y relanzar |
+
+**Verificado en el entorno real:** el frontend (`c4bd8e7`) se desplegó en Railway desde GitHub Actions y `/api/health` respondió `UP` con su versión. El rollback en Railway (con `simulate_failure`)
+no se ha ejecutado en vivo todavía; su lógica sí está probada con el hosting simulado (20 casos en `scripts/test/deploy_frontend_test.sh`). El rollback vuelve a la imagen anterior, pero no revierte el commit en Git
+ni coordina con el backend.
 
 ## Versiones instaladas (verificadas con `npm view`)
 
@@ -190,11 +204,11 @@ Testing Library React 16.3.3 · ESLint 9.39.5 · Prettier 3.9.10.
   Tras registrar un mantenimiento se refrescan el detalle, el historial y la lista, porque cambian el estado y las horas restantes. Las notas del mantenimiento son opcionales: vacías o solo con espacios no se envían.
 - **Las fechas se muestran en hora de Perú** (`America/Lima`, UTC-5 sin horario de verano). La zona va fija a propósito para que el servidor y el navegador muestren lo mismo.
 - **`details[].reason`** (contrato real) en lugar de `details[].message` (prompt); se aceptan ambos.
-- **Backend corregido antes del frontend** (rama `fix/seguridad-owasp` del backend): pendiente de desplegar con su `deploy.sh`; el frontend funciona con y sin `traceId`, maneja 429 y 413, y consume los listados paginados nuevos.
+- **Backend desplegado antes que el frontend:** el backend con las correcciones de seguridad y las reglas de negocio ya corre en Railway; el frontend funciona con y sin `traceId`, maneja 429 y 413, y consume los listados paginados nuevos.
 - **Paginación del backend desde 0** (`page=0` es la primera página, como Spring Data): el frontend la usa así y muestra "Página n+1".
 - **Cookie `__Host-` en producción:** exige `Secure`, así que en `http://localhost` con `next start` funciona en Chrome y Firefox (tratan `localhost` como seguro) pero no en Safari; en desarrollo (`npm run dev`) el nombre es `sesion` sin prefijo y funciona en todos.
 - **Verificado de punta a punta** contra el backend real (Docker + MySQL): login, redirecciones, listado, creación, duplicado (409) y validación (400) mapeados al formulario, mantenimiento, baja, logout, y en el navegador (login → formulario con validaciones → alta con toast), sin errores de consola, sin token en `localStorage`/`sessionStorage` y sin scripts en línea sin nonce.
-- **No ejecutado en este entorno:** ZAP, CodeQL y gitleaks (solo corren en GitHub), y el despliegue real en Railway (requiere credenciales y el servicio creado). Sí se probó: la imagen construida y corriendo contra un backend simulado (health con versión, login, proxy, redirecciones, usuario sin root) y `deploy-frontend.sh` con las herramientas simuladas (15 casos: éxito, rollback, variables faltantes, idempotencia, etc.).
+- **Escaneos y despliegue:** ZAP, CodeQL y gitleaks solo corren en GitHub. En la primera corrida gitleaks y CodeQL pasaron y ZAP marcó el formulario de login sin `method` (corregido con `method="post"`) y avisos informativos (aceptados en `.zap/rules.tsv`); la corrida posterior a esos cambios queda por confirmar en GitHub. El despliegue real en Railway sí se ejecutó y quedó sano. Localmente se probó la imagen contra un backend simulado (health con versión, login, proxy, redirecciones, usuario sin root) y `deploy-frontend.sh` con las herramientas simuladas (20 casos).
 
 ## Uso de IA
 
