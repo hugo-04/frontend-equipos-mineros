@@ -35,6 +35,11 @@ describe("LoginForm", () => {
     expect(campo).toHaveAttribute("type", "password");
   });
 
+  it("el formulario es POST, así la clave nunca viaja en la URL si se envía antes de que cargue JavaScript", () => {
+    const { container } = montar();
+    expect(container.querySelector("form")).toHaveAttribute("method", "post");
+  });
+
   it("el ojito no envía el formulario", async () => {
     const user = userEvent.setup();
     montar();

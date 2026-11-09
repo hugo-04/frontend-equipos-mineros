@@ -29,6 +29,9 @@ export function LoginForm({ destino }: { destino: string }) {
 
   return (
     <form
+      // Sin method, si el formulario se envía antes de que cargue JavaScript el navegador usa GET y la clave
+      // viaja en la URL. Con POST nunca queda en la URL; con JavaScript, onSubmit la manda por la API.
+      method="post"
       onSubmit={(evento) => {
         // El error del intento anterior se quita al volver a enviar, así no queda junto a los errores nuevos
         login.reset();
