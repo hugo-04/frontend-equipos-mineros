@@ -21,11 +21,15 @@
 #   4  el despliegue falló y el rollback también: hay que intervenir a mano, ya
 #
 # Variables obligatorias:
-#   RAILWAY_TOKEN     token de proyecto de Railway
+#   RAILWAY_TOKEN     token de proyecto de Railway (obligatoria, salvo que se use RAILWAY_API_TOKEN)
 #   RAILWAY_SERVICE   nombre o id del servicio del frontend en Railway
 #   APP_URL           URL pública del frontend (ej. https://equipos-web.up.railway.app)
 #   REGISTRY_IMAGE    imagen sin tag (ej. ghcr.io/mi-org/equipos-mineros-frontend)
 # Variables opcionales:
+#   RAILWAY_API_TOKEN    alternativa a RAILWAY_TOKEN: un token de cuenta o de workspace, para cuando la cuenta de
+#                        Railway todavía no puede crear tokens de proyecto. Ese token no apunta a un proyecto, así
+#                        que con él hay que definir también RAILWAY_PROJECT y RAILWAY_ENVIRONMENT
+#   RAILWAY_PROJECT      id del proyecto de Railway (solo se usa con RAILWAY_API_TOKEN)
 #   RAILWAY_ENVIRONMENT  entorno de Railway (si no se indica, usa el del token)
 #   HEALTH_RETRIES       intentos de /api/health (por defecto 10)
 #   HEALTH_INTERVAL      segundos entre intentos (por defecto 5)
@@ -84,12 +88,26 @@ verificar_requisitos() {
       faltan=1
     fi
   done
-  for variable in RAILWAY_TOKEN RAILWAY_SERVICE APP_URL REGISTRY_IMAGE; do
+  for variable in RAILWAY_SERVICE APP_URL REGISTRY_IMAGE; do
     if [ -z "${!variable:-}" ]; then
       error "falta la variable de entorno $variable (ver el encabezado de deploy-frontend.sh y el README)."
       faltan=1
     fi
   done
+  # El token de proyecto (RAILWAY_TOKEN) ya sabe a qué proyecto y entorno apunta. El de cuenta o de workspace
+  # (RAILWAY_API_TOKEN) no, así que con ese hay que indicar el proyecto y el entorno.
+  if [ -z "${RAILWAY_TOKEN:-}" ] && [ -z "${RAILWAY_API_TOKEN:-}" ]; then
+    error "falta la variable de entorno RAILWAY_TOKEN (o RAILWAY_API_TOKEN junto con RAILWAY_PROJECT y RAILWAY_ENVIRONMENT)."
+    faltan=1
+  fi
+  if [ -z "${RAILWAY_TOKEN:-}" ] && [ -n "${RAILWAY_API_TOKEN:-}" ]; then
+    for variable in RAILWAY_PROJECT RAILWAY_ENVIRONMENT; do
+      if [ -z "${!variable:-}" ]; then
+        error "con RAILWAY_API_TOKEN hace falta también la variable de entorno $variable."
+        faltan=1
+      fi
+    done
+  fi
   case "$SIMULATE_FAILURE" in
     ""|health) ;;
     *) error "SIMULATE_FAILURE='$SIMULATE_FAILURE' no es válido. Valores permitidos: vacío o 'health'."; faltan=1 ;;
@@ -133,6 +151,7 @@ desplegar_tag() {
   log "Desplegando $REGISTRY_IMAGE:$tag en Railway (servicio $RAILWAY_SERVICE)..."
   local args=(up "$carpeta" --service "$RAILWAY_SERVICE" --ci)
   [ -n "${RAILWAY_ENVIRONMENT:-}" ] && args+=(--environment "$RAILWAY_ENVIRONMENT")
+  [ -n "${RAILWAY_PROJECT:-}" ] && args+=(--project "$RAILWAY_PROJECT")
   local resultado=0
   railway "${args[@]}" || resultado=$?
   rm -rf "$carpeta"

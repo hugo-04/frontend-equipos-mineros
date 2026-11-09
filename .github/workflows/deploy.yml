@@ -79,7 +79,11 @@ jobs:
 
       - name: Desplegar (si hace rollback, este paso termina en rojo)
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Token de cuenta o de workspace (para cuentas que no pueden crear tokens de proyecto).
+          # Si se tiene un token de proyecto, se puede usar RAILWAY_TOKEN en su lugar y quitar las otras dos.
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT: ${{ secrets.RAILWAY_PROJECT }}
+          RAILWAY_ENVIRONMENT: production
           RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE }}
           APP_URL: ${{ secrets.APP_URL }}
           # Lint, tipos, pruebas y build ya corrieron en el job anterior

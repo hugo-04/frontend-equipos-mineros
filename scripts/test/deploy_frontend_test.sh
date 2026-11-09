@@ -108,6 +108,7 @@ nuevo_escenario() {
   export DEPLOY_STATE_DIR="$ESC/deploy-state"
   unset SIMULATE_FAILURE MOCK_GIT_SHA MOCK_DOCKER_PUSH_FAIL MOCK_NPM_EXIT MOCK_RAILWAY_FAIL_TAGS
   unset MOCK_RAILWAY_NOOP_TAGS MOCK_UNHEALTHY_TAGS
+  unset RAILWAY_API_TOKEN RAILWAY_PROJECT RAILWAY_ENVIRONMENT
   CODIGO=""
   SALIDA="$ESC/salida.log"
 }
@@ -320,6 +321,39 @@ t_no_filtra_secretos() {
   afirmar_salida_no_contiene "token-de-prueba"
 }
 
+# (10) con un token de cuenta (RAILWAY_API_TOKEN) el despliegue apunta al proyecto y al entorno indicados
+t_token_de_cuenta() {
+  nuevo_escenario "old1234"
+  unset RAILWAY_TOKEN
+  export RAILWAY_API_TOKEN="api-token-de-prueba" RAILWAY_PROJECT="proyecto-123" RAILWAY_ENVIRONMENT="production"
+  ejecutar_deploy
+  afirmar_codigo 0
+  afirmar_tag_en_produccion "abc1234"
+  grep -q "^railway up .*--project proyecto-123" "$ESC/state/calls.log" || fallo "railway up no recibió --project"
+  grep -q "^railway up .*--environment production" "$ESC/state/calls.log" || fallo "railway up no recibió --environment"
+  afirmar_salida_no_contiene "api-token-de-prueba"
+}
+
+# (10b) con un token de cuenta, si falta el proyecto -> exit 1 con mensaje claro y sin tocar nada
+t_token_de_cuenta_sin_proyecto() {
+  nuevo_escenario "old1234"
+  unset RAILWAY_TOKEN
+  export RAILWAY_API_TOKEN="api-token-de-prueba" RAILWAY_ENVIRONMENT="production"
+  ejecutar_deploy
+  afirmar_codigo 1
+  afirmar_salida_contiene "con RAILWAY_API_TOKEN hace falta también la variable de entorno RAILWAY_PROJECT"
+  afirmar_sin_llamadas "docker"
+  afirmar_sin_llamadas "railway"
+}
+
+# (10c) con el token de proyecto no se manda --project (el token ya sabe cuál es)
+t_token_de_proyecto_sin_project() {
+  nuevo_escenario "old1234"
+  ejecutar_deploy
+  afirmar_codigo 0
+  ! grep -q -e "--project" "$ESC/state/calls.log" || fallo "con RAILWAY_TOKEN no debía mandarse --project"
+}
+
 # Ejecución de todas las pruebas
 PATH_ORIGINAL="$PATH"
 echo "== Pruebas de deploy-frontend.sh =="
@@ -338,6 +372,9 @@ prueba "(6b) primer despliegue fallido -> código 3, sin rollback posible" t_pri
 prueba "(7) fallan las pruebas -> no se construye ni se despliega" t_fallan_las_pruebas
 prueba "(8) falla el push de la imagen -> no se toca producción" t_falla_el_push
 prueba "(9) el token no se imprime en los logs" t_no_filtra_secretos
+prueba "(10) token de cuenta: despliega con --project y --environment" t_token_de_cuenta
+prueba "(10b) token de cuenta sin proyecto -> exit 1 con mensaje claro" t_token_de_cuenta_sin_proyecto
+prueba "(10c) token de proyecto: no manda --project" t_token_de_proyecto_sin_project
 
 echo
 echo "== Resultado: $PASARON pasaron, $FALLARON fallaron =="
