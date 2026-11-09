@@ -158,6 +158,8 @@ Códigos de salida (los mismos que el backend): `0` salió bien · `1` falló an
 `SIMULATE_FAILURE=health` hace fallar la verificación a propósito para demostrar el rollback, y `OMITIR_PRUEBAS=1` se salta lint, tipos y pruebas si el CI ya las corrió.
 Las pruebas del script, con Railway y las demás herramientas simuladas, están en [`scripts/test/deploy_frontend_test.sh`](scripts/test/deploy_frontend_test.sh) y corren en el CI.
 
+**Despliegue automático con GitHub Actions:** [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) corre en cada push a `main` (y a mano desde *Actions → Deploy → Run workflow*, con `simulate_failure` para demostrar el rollback). Primero lint, tipos, pruebas, build y las pruebas del script; después ejecuta `./scripts/deploy-frontend.sh` con `OMITIR_PRUEBAS=1`. Inicia sesión en GHCR con el `GITHUB_TOKEN` de la corrida y la imagen sale de `ghcr.io/<usuario>/<repo>`. Solo hay que cargar en *Settings → Secrets and variables → Actions* `RAILWAY_TOKEN`, `RAILWAY_SERVICE` y `APP_URL`; si el despliegue hace rollback, el paso termina en rojo.
+
 **Orden de despliegue con el backend:** el `PUT /equipos/{id}` del backend ya no acepta `tipoId` (solo `codigo` y `horometro`), así que este frontend y el backend
 nuevo van juntos. Se despliega **primero el backend** (`./deploy.sh`) y enseguida este frontend (`./scripts/deploy-frontend.sh`); en el rato que el frontend viejo siga
 arriba con el backend nuevo, editar un equipo falla con `400`.

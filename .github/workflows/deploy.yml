@@ -1,0 +1,92 @@
+name: Deploy
+
+# Despliega en cada push a main. También se puede lanzar a mano y, con simulate_failure=true,
+# sirve para demostrar el rollback automático.
+# Es el mismo esquema del backend: acá solo se prepara el entorno, toda la lógica está en scripts/deploy-frontend.sh.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      simulate_failure:
+        description: >-
+          Simula que /api/health falla tras desplegar, para demostrar el rollback a la versión
+          anterior. Desactivado por defecto: úsalo solo para la demostración.
+        type: boolean
+        default: false
+
+# Nunca dos despliegues a la vez: el segundo espera a que termine el primero
+concurrency:
+  group: deploy-produccion
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write   # publicar la imagen en GHCR
+
+jobs:
+  test:
+    name: 1. Calidad y pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # La versión de Node sale de .nvmrc, la misma que usa el Dockerfile y que se usa en desarrollo
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+
+      - name: Build
+        run: npm run build
+        env:
+          BACKEND_URL: http://localhost:8080
+
+      - name: Probar deploy-frontend.sh con el hosting simulado
+        run: ./scripts/test/deploy_frontend_test.sh
+
+  deploy:
+    name: 2. Deploy (./scripts/deploy-frontend.sh)
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # De acá en adelante solo se prepara el entorno; toda la lógica del despliegue está en deploy-frontend.sh
+      - name: Instalar la CLI de Railway
+        run: npm install -g @railway/cli
+
+      - name: Iniciar sesión en GHCR (registro de imágenes)
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calcular el nombre de la imagen (en minúsculas)
+        run: echo "REGISTRY_IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Desplegar (si hace rollback, este paso termina en rojo)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE }}
+          APP_URL: ${{ secrets.APP_URL }}
+          # Lint, tipos, pruebas y build ya corrieron en el job anterior
+          OMITIR_PRUEBAS: '1'
+          # Solo se activa si se lanza a mano con simulate_failure=true
+          SIMULATE_FAILURE: ${{ inputs.simulate_failure && 'health' || '' }}
+          # Railway tarda en construir y arrancar, así que se da más margen que el valor por defecto
+          HEALTH_RETRIES: '24'
+          HEALTH_INTERVAL: '5'
+        run: ./scripts/deploy-frontend.sh
