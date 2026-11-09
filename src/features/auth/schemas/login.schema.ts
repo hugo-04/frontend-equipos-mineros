@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ApiLoginRequest, Coinciden, Verificar } from "@/shared/types";
 
 /** Los mismos límites que tiene el LoginRequest del contrato del backend. */
 export const loginSchema = z.object({
@@ -14,6 +15,9 @@ export const loginSchema = z.object({
 });
 
 export type LoginValues = z.infer<typeof loginSchema>;
+
+// El contrato manda: si el LoginRequest cambia y este esquema no se ajusta, el typecheck falla en esta línea.
+export type LoginCoincideConElContrato = Verificar<Coinciden<LoginValues, ApiLoginRequest>>;
 
 /** Lo que el servidor de Next le devuelve al navegador al iniciar sesión. Nunca incluye el token. */
 export const sesionRespuestaSchema = z.object({

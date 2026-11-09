@@ -1,4 +1,4 @@
-import type { z } from "zod";
-import type { tipoEquipoSchema } from "../schemas/tipo.schema";
+import type { ApiTipoEquipo } from "@/shared/types";
 
-export type TipoEquipo = z.infer<typeof tipoEquipoSchema>;
+/** Un tipo de equipo con su intervalo de mantenimiento. Sale del contrato (TipoEquipoResponse): no se escribe a mano. */
+export type TipoEquipo = ApiTipoEquipo;

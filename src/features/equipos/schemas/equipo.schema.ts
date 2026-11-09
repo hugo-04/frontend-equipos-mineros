@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { paginaSchema } from "@/shared/schemas/pagina";
 import { tipoEquipoSchema } from "@/features/tipos";
+import type {
+  ApiEquipo,
+  ApiEquipoRequest,
+  ApiEquipoUpdateRequest,
+  Coinciden,
+  Verificar,
+} from "@/shared/types";
 
 /** Cómo tiene que verse un equipo que llega del API. Si la respuesta no lo cumple, no se usa. */
 export const equipoSchema = z.object({
@@ -78,3 +85,14 @@ export type CrearEquipoInput = z.input<typeof crearEquipoSchema>;
 export type CrearEquipoValues = z.output<typeof crearEquipoSchema>;
 export type EditarEquipoInput = z.input<ReturnType<typeof editarEquipoSchema>>;
 export type EditarEquipoValues = z.output<ReturnType<typeof editarEquipoSchema>>;
+
+// El contrato manda: si cambia un campo y estos esquemas no se ajustan, el typecheck falla en estas líneas.
+export type EquipoCoincideConElContrato = Verificar<
+  Coinciden<z.output<typeof equipoSchema>, ApiEquipo>
+>;
+export type CrearEquipoCoincideConElContrato = Verificar<
+  Coinciden<CrearEquipoValues, ApiEquipoRequest>
+>;
+export type EditarEquipoCoincideConElContrato = Verificar<
+  Coinciden<EditarEquipoValues, ApiEquipoUpdateRequest>
+>;

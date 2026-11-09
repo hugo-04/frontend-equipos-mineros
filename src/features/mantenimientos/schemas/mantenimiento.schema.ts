@@ -1,5 +1,11 @@
 import { z } from "zod";
 import { paginaSchema } from "@/shared/schemas/pagina";
+import type {
+  ApiMantenimiento,
+  ApiMantenimientoRequest,
+  Coinciden,
+  Verificar,
+} from "@/shared/types";
 
 export const mantenimientoSchema = z.object({
   id: z.number().int().positive(),
@@ -10,7 +16,8 @@ export const mantenimientoSchema = z.object({
   notas: z
     .string()
     .nullish()
-    .transform((v) => v ?? undefined),
+    .transform((v) => v ?? undefined)
+    .optional(),
 });
 
 export const paginaMantenimientosSchema = paginaSchema(mantenimientoSchema);
@@ -27,3 +34,11 @@ export const mantenimientoFormSchema = z.object({
 });
 
 export type MantenimientoFormValues = z.infer<typeof mantenimientoFormSchema>;
+
+// El contrato manda: si cambia un campo y estos esquemas no se ajustan, el typecheck falla en estas líneas.
+export type MantenimientoCoincideConElContrato = Verificar<
+  Coinciden<z.output<typeof mantenimientoSchema>, ApiMantenimiento>
+>;
+export type MantenimientoFormCoincideConElContrato = Verificar<
+  Coinciden<MantenimientoFormValues, ApiMantenimientoRequest>
+>;

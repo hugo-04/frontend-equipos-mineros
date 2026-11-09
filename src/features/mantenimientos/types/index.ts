@@ -1,4 +1,4 @@
-import type { z } from "zod";
-import type { mantenimientoSchema } from "../schemas/mantenimiento.schema";
+import type { ApiMantenimiento } from "@/shared/types";
 
-export type Mantenimiento = z.infer<typeof mantenimientoSchema>;
+/** Un mantenimiento del historial. Sale del contrato (MantenimientoResponse): no se escribe a mano. */
+export type Mantenimiento = ApiMantenimiento;

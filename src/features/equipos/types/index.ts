@@ -1,17 +1,10 @@
-import type { z } from "zod";
-import type { equipoSchema } from "../schemas/equipo.schema";
+import type { ApiEquipo, ApiEquipoRequest, ApiEquipoUpdateRequest } from "@/shared/types";
 
-export type Equipo = z.infer<typeof equipoSchema>;
+/** El equipo que devuelve el API. Sale del contrato (EquipoResponse): no se escribe a mano. */
+export type Equipo = ApiEquipo;
 
 /** El cuerpo para crear un equipo (el EquipoRequest del contrato). */
-export interface CrearEquipoRequest {
-  codigo: string;
-  tipoId: number;
-  horometro: number;
-}
+export type CrearEquipoRequest = ApiEquipoRequest;
 
 /** El cuerpo para editarlo (el EquipoUpdateRequest): sin tipoId, porque el tipo no se puede cambiar. */
-export interface EditarEquipoRequest {
-  codigo: string;
-  horometro: number;
-}
+export type EditarEquipoRequest = ApiEquipoUpdateRequest;
