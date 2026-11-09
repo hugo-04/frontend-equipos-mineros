@@ -42,9 +42,12 @@ src/
 └── proxy.ts                      # convención de Next.js 16 (reemplaza a middleware.ts)
 ```
 
-- **Tipos y contrato (contract-first):** `npm run types:api` genera `src/shared/types/api.generated.ts` desde
-  [`openapi/openapi.yaml`](openapi/openapi.yaml) (copia del contrato del backend; hay que re-copiarla si el backend cambia).
+- **Tipos y contrato (contract-first):** el contrato del backend es la fuente de verdad. [`openapi/openapi.yaml`](openapi/openapi.yaml) es su copia y
+  [`openapi-typescript`](https://openapi-ts.dev) genera de ahí `src/shared/types/api.generated.ts` (solo tipos, no agrega código al navegador).
+  Los tipos de equipo, tipo, mantenimiento, login y paginación **son esos tipos generados**: no hay interfaces escritas a mano.
   Las **respuestas del API se validan con Zod** en la capa `api/`; lo que no cumpla el contrato se trata como error del sistema.
+- **Cuando cambia el contrato** (ver [Cuando cambia el contrato](#cuando-cambia-el-contrato)): `npm run contrato:copiar` trae la versión nueva del backend y regenera los tipos, y
+  el compilador y las pruebas indican exactamente qué hay que ajustar.
 - **TanStack Query** para todas las consultas y escrituras. Claves centralizadas (`equipoKeys.list()`, `.detail(id)`,
   `.mantenimientos(id)`); `retry` solo ante red caída o 5xx (nunca 4xx); al registrar un mantenimiento se invalidan detalle, historial y lista.
 - **Zod + React Hook Form** (`zodResolver`): un esquema por formulario alineado con el contrato del backend
@@ -112,7 +115,7 @@ El contrato del backend entrega `details[].reason` (el prompt decía `message`):
 npm run lint && npm run typecheck && npm run test && npm run build
 ```
 
-**218 pruebas** (Vitest + Testing Library): esquemas Zod (casos válidos e inválidos), `classifyError` y mapeo de `details`, componentes
+**230 pruebas** (Vitest + Testing Library): esquemas Zod (casos válidos e inválidos), `classifyError` y mapeo de `details`, componentes
 (formulario de equipo con errores accesibles, 409 en el campo, error de sistema sin detalles, badge de estado, diálogo de confirmación)
 y la **seguridad**: `from` del login (`//evil.com`, `https://…`, `/\evil`, `%0d%0a`), lista blanca del proxy (`..`, `%2e%2e`, esquemas y hosts externos,
 rutas fuera de la lista), que el token **jamás** salga en el cuerpo del login ni del proxy, que se borre la cookie en 401, que se rechacen
@@ -178,6 +181,20 @@ arriba con el backend nuevo, editar un equipo falla con `400`.
 **Verificado en el entorno real:** el frontend (`c4bd8e7`) se desplegó en Railway desde GitHub Actions y `/api/health` respondió `UP` con su versión. El rollback en Railway (con `simulate_failure`)
 no se ha ejecutado en vivo todavía; su lógica sí está probada con el hosting simulado (20 casos en `scripts/test/deploy_frontend_test.sh`). El rollback vuelve a la imagen anterior, pero no revierte el commit en Git
 ni coordina con el backend.
+
+## Cuando cambia el contrato
+
+El backend define el contrato (`openapi.yaml`) y de él salen sus DTOs; el frontend toma de ahí sus tipos. Pasos al cambiar algo:
+
+1. En el frontend: `npm run contrato:copiar` copia el contrato del backend (busca `../BACKEND`, o la ruta de `CONTRATO_BACKEND`) y regenera `api.generated.ts`.
+   `npm run contrato:verificar` solo comprueba si la copia está al día y falla si no.
+2. Corre `npm run typecheck`. Qué avisa y dónde:
+   - **Un campo nuevo, quitado o con otro tipo:** falla donde un esquema de Zod ya no coincide con el contrato (los `...CoincideConElContrato` de cada `schemas/*.ts`, que usan `Coinciden` de `shared/types`),
+     donde la capa `api/` devuelve el tipo viejo y en los datos de prueba que les falta o les sobra el campo.
+   - **Un límite nuevo (largo, rango o patrón):** los tipos no lo ven, pero [`src/shared/types/contrato.test.ts`](src/shared/types/contrato.test.ts) lee el contrato y exige que los formularios acepten y rechacen lo mismo que él.
+3. Con esos avisos se ajusta solo lo que cambia de verdad: agregar o quitar el campo en el esquema de Zod y en la pantalla que lo use. Los tipos no se tocan a mano.
+
+Esto no actualiza la lógica ni las pantallas solo: lo que logra es que **nada quede desalineado sin que se note**. Los despliegues siguen el orden backend primero, frontend después.
 
 ## Pensado para quien entra por primera vez
 
