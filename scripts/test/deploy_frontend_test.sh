@@ -30,7 +30,9 @@ MOCK
   cat >"$bin/docker" <<'MOCK'
 #!/usr/bin/env bash
 echo "docker $*" >>"$MOCK_STATE/calls.log"
-if [ "$1" = "push" ] && [ "${MOCK_DOCKER_PUSH_FAIL:-0}" = "1" ]; then
+# Los primeros MOCK_DOCKER_PUSH_FAIL_FIRST pushes fallan; con MOCK_DOCKER_PUSH_FAIL=1 fallan todos
+pushes="$(grep -c "^docker push" "$MOCK_STATE/calls.log" || true)"
+if [ "$1" = "push" ] && { [ "${MOCK_DOCKER_PUSH_FAIL:-0}" = "1" ] || [ "$pushes" -le "${MOCK_DOCKER_PUSH_FAIL_FIRST:-0}" ]; }; then
   echo "denied: requested access to the resource is denied" >&2
   exit 1
 fi
@@ -108,7 +110,8 @@ nuevo_escenario() {
   export DEPLOY_STATE_DIR="$ESC/deploy-state"
   unset SIMULATE_FAILURE MOCK_GIT_SHA MOCK_DOCKER_PUSH_FAIL MOCK_NPM_EXIT MOCK_RAILWAY_FAIL_TAGS
   unset MOCK_RAILWAY_NOOP_TAGS MOCK_UNHEALTHY_TAGS
-  unset RAILWAY_API_TOKEN RAILWAY_PROJECT RAILWAY_ENVIRONMENT
+  unset RAILWAY_API_TOKEN RAILWAY_PROJECT RAILWAY_ENVIRONMENT MOCK_DOCKER_PUSH_FAIL_FIRST
+  export PUSH_INTERVAL=0
   CODIGO=""
   SALIDA="$ESC/salida.log"
 }
@@ -142,6 +145,11 @@ afirmar_despliegues() {
   n="$(grep -c . "$ESC/state/deployed_tags.log" || true)"
   [ "$n" = "$1" ] || fallo "se esperaban $1 despliegues (railway up) y hubo $n: $(tr '\n' ' ' <"$ESC/state/deployed_tags.log")"
 }
+afirmar_pushes() {
+  local n
+  n="$(grep -c "^docker push" "$ESC/state/calls.log" || true)"
+  [ "$n" = "$1" ] || fallo "se esperaban $1 docker push y hubo $n"
+}
 afirmar_sin_llamadas() {
   ! grep -q "^$1" "$ESC/state/calls.log" || fallo "no debía llamarse a '$1'"
 }
@@ -169,7 +177,7 @@ t_exito() {
   afirmar_salida_contiene "DESPLIEGUE OK"
   afirmar_salida_contiene "PASO 6/7"
   [ "$(cat "$DEPLOY_STATE_DIR/previous_tag" 2>/dev/null)" = "old1234" ] || fallo "no se guardó la versión previa en previous_tag"
-  grep -q "docker build --build-arg APP_VERSION=abc1234 -t ghcr.io/org/equipos-mineros-frontend:abc1234" "$ESC/state/calls.log" \
+  grep -q "docker build --provenance=false --sbom=false --build-arg APP_VERSION=abc1234 -t ghcr.io/org/equipos-mineros-frontend:abc1234" "$ESC/state/calls.log" \
     || fallo "la imagen no se etiquetó con el SHA corto"
 }
 
@@ -310,8 +318,28 @@ t_falla_el_push() {
   ejecutar_deploy
   afirmar_codigo 1
   afirmar_salida_contiene 'falló el paso "3/7'
+  afirmar_pushes 3
   afirmar_despliegues 0
   afirmar_tag_en_produccion "old1234"
+}
+
+# (8b) el primer push falla (paquete recién creado en GHCR) y el segundo funciona -> el despliegue sigue
+t_push_se_recupera() {
+  nuevo_escenario "old1234"
+  export MOCK_DOCKER_PUSH_FAIL_FIRST=1
+  ejecutar_deploy
+  afirmar_codigo 0
+  afirmar_pushes 2
+  afirmar_salida_contiene "docker push falló (intento 1/3)"
+  afirmar_tag_en_produccion "abc1234"
+}
+
+# (8c) la imagen se construye sin atestación, para que se publique como un manifiesto simple
+t_build_sin_atestacion() {
+  nuevo_escenario "old1234"
+  ejecutar_deploy
+  grep -q "^docker build --provenance=false --sbom=false " "$ESC/state/calls.log" \
+    || fallo "docker build debe llevar --provenance=false --sbom=false"
 }
 
 # (9) el token nunca aparece en los logs
@@ -371,6 +399,8 @@ prueba "(6) primer despliegue sin versión previa" t_primer_despliegue
 prueba "(6b) primer despliegue fallido -> código 3, sin rollback posible" t_primer_despliegue_falla
 prueba "(7) fallan las pruebas -> no se construye ni se despliega" t_fallan_las_pruebas
 prueba "(8) falla el push de la imagen -> no se toca producción" t_falla_el_push
+prueba "(8b) un push que falla una vez se reintenta y el despliegue sigue" t_push_se_recupera
+prueba "(8c) la imagen se construye sin atestación (--provenance=false)" t_build_sin_atestacion
 prueba "(9) el token no se imprime en los logs" t_no_filtra_secretos
 prueba "(10) token de cuenta: despliega con --project y --environment" t_token_de_cuenta
 prueba "(10b) token de cuenta sin proyecto -> exit 1 con mensaje claro" t_token_de_cuenta_sin_proyecto

@@ -34,6 +34,8 @@
 #   HEALTH_RETRIES       intentos de /api/health (por defecto 10)
 #   HEALTH_INTERVAL      segundos entre intentos (por defecto 5)
 #   HEALTH_TIMEOUT       segundos máximos por petición (por defecto 5)
+#   PUSH_RETRIES         intentos de docker push antes de dar el paso 3 por fallido (por defecto 3)
+#   PUSH_INTERVAL        segundos entre intentos de docker push (por defecto 10)
 #   OMITIR_PRUEBAS       con 1 se salta lint, typecheck y pruebas (solo si el CI ya las corrió)
 #   DEPLOY_STATE_DIR     carpeta donde se guardan los tags (por defecto .deploy)
 #   SIMULATE_FAILURE     con "health" la verificación de la versión nueva falla a propósito,
@@ -53,6 +55,8 @@ readonly EXIT_ROLLBACK_FALLO=4
 HEALTH_RETRIES="${HEALTH_RETRIES:-10}"
 HEALTH_INTERVAL="${HEALTH_INTERVAL:-5}"
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-5}"
+PUSH_RETRIES="${PUSH_RETRIES:-3}"
+PUSH_INTERVAL="${PUSH_INTERVAL:-10}"
 DEPLOY_STATE_DIR="${DEPLOY_STATE_DIR:-.deploy}"
 SIMULATE_FAILURE="${SIMULATE_FAILURE:-}"
 
@@ -139,6 +143,18 @@ detectar_version_desplegada() {
     ""|dev|local|test) echo "" ;;   # no es un tag de imagen al que se pueda volver
     *) echo "$version" ;;
   esac
+}
+
+# Sube la imagen al registro. GHCR a veces rechaza el primer push de un paquete recién creado y acepta el
+# siguiente, así que se reintenta antes de dar el paso por fallido.
+publicar_imagen() {
+  local imagen="$1" intento
+  for ((intento = 1; intento <= PUSH_RETRIES; intento++)); do
+    docker push "$imagen" && return 0
+    error "docker push falló (intento $intento/$PUSH_RETRIES)."
+    [ "$intento" -lt "$PUSH_RETRIES" ] && sleep "$PUSH_INTERVAL"
+  done
+  return 1
 }
 
 # El despliegue en Railway. Con su CLI no se elige un tag de imagen directamente, así que se sube una carpeta
@@ -238,8 +254,10 @@ main() {
   TAG="$(git rev-parse --short=7 HEAD)"
   local imagen="$REGISTRY_IMAGE:$TAG"
   log "Tag de esta versión: $TAG (nunca solo 'latest')"
-  docker build --build-arg "APP_VERSION=$TAG" -t "$imagen" .
-  docker push "$imagen"
+  # Sin --provenance=false Docker agrega a la imagen un manifiesto de atestación y la publica como un índice
+  # OCI; GHCR rechaza (denied) ese índice al ponerle la etiqueta. Con esas dos opciones sale un manifiesto simple.
+  docker build --provenance=false --sbom=false --build-arg "APP_VERSION=$TAG" -t "$imagen" .
+  publicar_imagen "$imagen"
   log "Imagen publicada: $imagen"
 
   paso "4/7 Guardando la versión actualmente desplegada"
