@@ -8,8 +8,8 @@ llevar el historial de mantenimientos. Consume el backend REST [`BACKEND`](../BA
 | Pantalla        | Descripción                                                                                                                                                                                        |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/login`        | Usuario y contraseña, validados con Zod; estado de carga; errores claros y genéricos                                                                                                               |
-| `/equipos`      | Tabla (tarjetas en móvil) con código, tipo, horómetro y **estado**. Búsqueda por código y filtros por tipo y estado. Crear, editar, ver detalle y eliminar (con confirmación que nombra el equipo) |
-| `/equipos/[id]` | Datos del equipo, estado, botón **Registrar mantenimiento** (notas opcionales) e historial paginado                                                                                                |
+| `/equipos`      | Tabla (tarjetas en móvil) con código, tipo, horómetro y **estado**. Búsqueda por código y filtros por tipo y estado. En cada fila, botones con texto: **Registrar** (mantenimiento, resaltado si el equipo lo requiere) e **Historial**; el código lleva al detalle. Crear, editar y eliminar (con confirmación que nombra el equipo) |
+| `/equipos/[id]` | Datos del equipo, estado con una frase que explica qué hacer, botón **Registrar mantenimiento** (notas opcionales) e historial paginado (ancla `#historial`)                                                                                                |
 
 Skeletons con la forma real del contenido, estados vacíos útiles, 404 amigable, `error.tsx` y `global-error.tsx`, modo claro/oscuro y
 animaciones sutiles con Motion que respetan `prefers-reduced-motion`.
@@ -112,7 +112,7 @@ El contrato del backend entrega `details[].reason` (el prompt decía `message`):
 npm run lint && npm run typecheck && npm run test && npm run build
 ```
 
-**205 pruebas** (Vitest + Testing Library): esquemas Zod (casos válidos e inválidos), `classifyError` y mapeo de `details`, componentes
+**218 pruebas** (Vitest + Testing Library): esquemas Zod (casos válidos e inválidos), `classifyError` y mapeo de `details`, componentes
 (formulario de equipo con errores accesibles, 409 en el campo, error de sistema sin detalles, badge de estado, diálogo de confirmación)
 y la **seguridad**: `from` del login (`//evil.com`, `https://…`, `/\evil`, `%0d%0a`), lista blanca del proxy (`..`, `%2e%2e`, esquemas y hosts externos,
 rutas fuera de la lista), que el token **jamás** salga en el cuerpo del login ni del proxy, que se borre la cookie en 401, que se rechacen
@@ -178,6 +178,17 @@ arriba con el backend nuevo, editar un equipo falla con `400`.
 **Verificado en el entorno real:** el frontend (`c4bd8e7`) se desplegó en Railway desde GitHub Actions y `/api/health` respondió `UP` con su versión. El rollback en Railway (con `simulate_failure`)
 no se ha ejecutado en vivo todavía; su lógica sí está probada con el hosting simulado (20 casos en `scripts/test/deploy_frontend_test.sh`). El rollback vuelve a la imagen anterior, pero no revierte el commit en Git
 ni coordina con el backend.
+
+## Pensado para quien entra por primera vez
+
+El mantenimiento no depende de que alguien sepa qué hace un icono:
+
+- **Botones con texto** en cada fila de la lista (**Registrar** e **Historial**) en vez de solo iconos; los de editar y eliminar llevan una pista al pasar el mouse. El código del equipo es un enlace a su detalle.
+- **Registrar** sale resaltado cuando el equipo requiere mantenimiento y discreto cuando está al día, y se puede hacer desde la lista sin entrar al detalle.
+- **Un aviso corto de cómo funciona** (tres líneas) arriba de la lista, que se descarta con *Entendido* y el navegador recuerda (`localStorage`; si no puede guardarlo, vuelve a salir).
+- **El diálogo de registrar** explica con palabras simples qué hace: queda en el historial con la fecha y el horómetro, y el conteo de horas vuelve a empezar.
+- **En el detalle**, el estado dice qué hacer y enlaza al historial (`/equipos/[id]#historial`), y el historial vacío explica cómo se crea el primero.
+- La ruta [`equipos-con-mantenimiento.tsx`](<src/app/(protected)/equipos/equipos-con-mantenimiento.tsx>) junta las dos features: la lista recibe el botón por la prop `accionesFila`, así equipos y mantenimientos siguen sin importarse entre sí.
 
 ## Versiones instaladas (verificadas con `npm view`)
 
