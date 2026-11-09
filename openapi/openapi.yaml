@@ -445,6 +445,11 @@ components:
           type: string
           description: Versión (tag de la imagen) que está corriendo
           example: a1b2c3d
+        iniciadoEn:
+          type: string
+          format: date-time
+          description: Momento (UTC) en que arrancó esta instancia. Sirve para comprobar que quedó corriendo la versión nueva
+          example: '2026-11-09T18:49:43Z'
 
     PaginaBase:
       type: object

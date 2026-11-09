@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write .",
-    "types:api": "openapi-typescript openapi/openapi.yaml -o src/shared/types/api.generated.ts"
+    "types:api": "openapi-typescript openapi/openapi.yaml -o src/shared/types/api.generated.ts",
+    "contrato:copiar": "node scripts/contrato.mjs && npm run types:api",
+    "contrato:verificar": "node scripts/contrato.mjs --verificar"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.3",
@@ -55,6 +57,7 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4.3.5",
     "typescript": "^5.9.3",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.0",
+    "yaml": "^2.9.1"
   }
 }

@@ -161,6 +161,12 @@ export interface components {
              * @example a1b2c3d
              */
             version?: string;
+            /**
+             * Format: date-time
+             * @description Momento (UTC) en que arrancó esta instancia. Sirve para comprobar que quedó corriendo la versión nueva
+             * @example 2026-11-09T18:49:43Z
+             */
+            iniciadoEn?: string;
         };
         /** @description Datos de paginación comunes a todos los listados */
         PaginaBase: {
