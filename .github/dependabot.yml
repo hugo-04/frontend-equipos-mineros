@@ -7,6 +7,15 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Saltos de versión mayor que hoy no son compatibles con el resto del proyecto (se probaron en una copia limpia):
+    # - TypeScript 7: el lint se rompe, porque eslint-config-next no carga con él.
+    # - eslint 10: funciona, pero eslint-config-next 16 trae plugins (import, jsx-a11y, react) que solo declaran soporte hasta eslint 9.
+    # Se revisan a mano cuando el ecosistema los soporte; los parches y menores siguen llegando solos.
+    ignore:
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
     groups:
       next-react:
         patterns:
